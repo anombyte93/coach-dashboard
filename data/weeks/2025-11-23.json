@@ -1,0 +1,80 @@
+{
+  "weekOf": "2025-11-23",
+  "measurements": {
+    "weight": null,
+    "waist": null,
+    "chest": null,
+    "middle": null,
+    "butt": null,
+    "leg": null,
+    "steps": 0
+  },
+  "training": {
+    "overall_performance": "",
+    "completed": "",
+    "difficulty": "",
+    "recovery": "",
+    "enjoyment": ""
+  },
+  "nutrition": {
+    "daily": [
+      { "day": "Sat", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+      { "day": "Sun", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+      { "day": "Mon", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+      { "day": "Tue", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+      { "day": "Wed", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+      { "day": "Thu", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 },
+      { "day": "Fri", "calories": 0, "protein": 0, "carbs": 0, "fat": 0 }
+    ],
+    "averages": {
+      "calories": 0,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 0
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 314,
+      "fat": 102
+    },
+    "notes": ""
+  },
+  "whoop": {
+    "daily": [
+      { "day": "Sat", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 },
+      { "day": "Sun", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 },
+      { "day": "Mon", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 },
+      { "day": "Tue", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 },
+      { "day": "Wed", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 },
+      { "day": "Thu", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 },
+      { "day": "Fri", "hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0 }
+    ],
+    "averages": {
+      "hrv": 0,
+      "rhr": 0,
+      "sleep": 0,
+      "strain": 0,
+      "recovery": 0
+    },
+    "sleep_metrics": {
+      "avg_duration": 0,
+      "avg_efficiency": 0,
+      "avg_need": 8.9,
+      "avg_debt": 0,
+      "consistency": 0
+    },
+    "interpretation": ""
+  },
+  "wellbeing": {
+    "pain": "",
+    "appetite": "",
+    "cravings": "",
+    "stress": "",
+    "mood": "",
+    "recovery_outside_gym": "",
+    "lifestyle_factors": ""
+  },
+  "wins": [],
+  "coach_questions": ""
+}
