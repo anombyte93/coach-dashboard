@@ -1,4 +1,48 @@
 {
+  "_meta": {
+    "week_id": "2025-W46-SUN",
+    "iso_week": "2025-W47",
+    "interval": {
+      "startDate": "2025-11-16",
+      "endDate": "2025-11-22"
+    },
+    "display_label": "Nov 16–22, 2025",
+    "temporalCoverage": "2025-11-16/2025-11-22",
+    "calendar_rules": {
+      "week_starts_on": "Sunday",
+      "week_ends_on": "Saturday",
+      "convention": "US Sunday-start week"
+    },
+    "navigation": {
+      "prev_week_id": null,
+      "next_week_id": "2025-W47-SUN",
+      "week_number": 1,
+      "total_weeks_in_program": null,
+      "program_ref": "../program.json"
+    },
+    "data_completeness": {
+      "measurements": true,
+      "training": true,
+      "nutrition": true,
+      "whoop": true,
+      "wellbeing": true
+    }
+  },
+  "_ai_context": {
+    "summary": "Week 1 of coaching program. Client traveling with disrupted routine. High calorie intake (126% of target) due to travel/takeaway. Sleep deficit significant (5.7h avg vs 8.9h need). Recovery moderate at 57%. Strong training adherence despite challenges - 3 workouts completed. Key focus areas: meal prep, protein prioritization, hydration.",
+    "status": "baseline",
+    "key_metrics": {
+      "weight_kg": 116,
+      "avg_calories": 3447,
+      "avg_protein_g": 172,
+      "protein_target_pct": 88,
+      "avg_sleep_hours": 5.7,
+      "avg_recovery_pct": 57,
+      "total_steps": 56042
+    },
+    "flags": ["travel_week", "sleep_deficit", "calorie_surplus", "high_stress"],
+    "coach_priority": "Establish sleep and nutrition baseline after travel normalizes"
+  },
   "weekOf": "2025-11-16",
   "measurements": {
     "weight": 116,

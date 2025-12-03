@@ -123,6 +123,63 @@
       height: 16px;
     }
 
+    /* Week Navigation */
+    .week-nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .week-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--gray-200);
+      border-radius: 50%;
+      background: white;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .week-nav-btn:hover:not(:disabled) {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--gray-50);
+    }
+
+    .week-nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .week-nav-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .week-nav-info {
+      text-align: center;
+      min-width: 200px;
+    }
+
+    .week-nav-info .week-number {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .week-nav-info .week-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
     /* Week Tabs */
     .week-tabs {
       display: flex;
@@ -529,6 +586,24 @@
       </div>
     </header>
 
+    <!-- Week Navigation (prev/next arrows) -->
+    <div class="week-nav-container" id="weekNavContainer">
+      <button class="week-nav-btn" id="prevWeekBtn" onclick="navigateToPrevWeek()" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <div class="week-nav-info">
+        <div class="week-number" id="weekNumber">Week 1</div>
+        <div class="week-label" id="weekLabel">Nov 16–22, 2025</div>
+      </div>
+      <button class="week-nav-btn" id="nextWeekBtn" onclick="navigateToNextWeek()" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+    </div>
+
     <!-- Week Tabs -->
     <div class="week-tabs" id="weekTabs">
       <!-- Populated by JavaScript -->
@@ -885,41 +960,84 @@
       }
     });
 
+    // ===== WEEK METADATA CACHE =====
+    // Cache week metadata for navigation and display
+    const weekMetadataCache = {};
+
+    // Preload metadata for all weeks
+    async function preloadWeekMetadata() {
+      for (const weekDate of availableWeeks) {
+        try {
+          const response = await fetch(`data/weeks/${weekDate}.json`);
+          if (response.ok) {
+            const weekData = await response.json();
+            if (weekData._meta) {
+              weekMetadataCache[weekDate] = weekData._meta;
+            }
+          }
+        } catch (e) {
+          console.log('Could not preload metadata for', weekDate);
+        }
+      }
+      // Re-render tabs with metadata
+      renderWeekTabs();
+    }
+
     // ===== WEEK TABS =====
     function renderWeekTabs() {
       const tabsContainer = document.getElementById('weekTabs');
       tabsContainer.innerHTML = '';
 
       availableWeeks.forEach((weekDate, index) => {
-        const date = new Date(weekDate);
-        const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const meta = weekMetadataCache[weekDate];
         const tab = document.createElement('button');
         tab.className = 'week-tab' + (index === currentWeekIndex ? ' active' : '');
-        tab.textContent = 'Week of ' + label;
+
+        // Use _meta.display_label if available, otherwise fallback to date formatting
+        if (meta && meta.display_label) {
+          // Extract just "Nov 16–22" from "Nov 16–22, 2025"
+          const shortLabel = meta.display_label.replace(/, \d{4}$/, '');
+          tab.textContent = 'Week of ' + shortLabel;
+          // Add tooltip with full context
+          tab.title = `${meta.display_label}\nWeek ${meta.navigation?.week_number || index + 1}`;
+        } else {
+          const date = new Date(weekDate);
+          const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          tab.textContent = 'Week of ' + label;
+        }
+
+        // Show data completeness indicator if available
+        if (meta && meta.data_completeness) {
+          const complete = Object.values(meta.data_completeness).every(v => v);
+          if (!complete) {
+            tab.textContent += ' (partial)';
+            tab.style.fontStyle = 'italic';
+          }
+        }
+
         tab.onclick = () => loadWeek(index);
         tabsContainer.appendChild(tab);
       });
-    }
 
-    async function loadWeek(index) {
-      if (index === currentWeekIndex && index === 0) return; // Already loaded from embedded data
-
-      currentWeekIndex = index;
-      const weekDate = availableWeeks[index];
-
-      try {
-        // Try to load from data/weeks/ directory
-        const response = await fetch(`data/weeks/${weekDate}.json`);
-        if (response.ok) {
-          data = await response.json();
-          days = data.whoop.daily.map(d => d.day);
-          renderDashboard();
-          renderWeekTabs();
+      // Add future weeks indicator (grayed out)
+      const futureWeeks = ['2025-11-30', '2025-12-07'];
+      futureWeeks.forEach(weekDate => {
+        if (!availableWeeks.includes(weekDate)) {
+          const date = new Date(weekDate);
+          const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const tab = document.createElement('button');
+          tab.className = 'week-tab';
+          tab.textContent = label + ' (5d)';
+          tab.disabled = true;
+          tab.style.opacity = '0.5';
+          tab.style.cursor = 'not-allowed';
+          tab.title = 'Future week - no data yet';
+          tabsContainer.appendChild(tab);
         }
-      } catch (e) {
-        console.log('Using embedded data for week', weekDate);
-      }
+      });
     }
+
+    // loadWeek is defined later with navigation support
 
     // ===== DASHBOARD RENDERING =====
     function renderDashboard() {
@@ -1423,11 +1541,83 @@
       }
     }
 
+    // ===== WEEK NAVIGATION =====
+    function updateWeekNavigation() {
+      const weekDate = availableWeeks[currentWeekIndex];
+      const meta = weekMetadataCache[weekDate] || data._meta;
+
+      // Update week label and number
+      if (meta) {
+        document.getElementById('weekNumber').textContent = `Week ${meta.navigation?.week_number || currentWeekIndex + 1}`;
+        document.getElementById('weekLabel').textContent = meta.display_label || weekDate;
+
+        // Update nav buttons based on navigation pointers
+        const prevBtn = document.getElementById('prevWeekBtn');
+        const nextBtn = document.getElementById('nextWeekBtn');
+
+        prevBtn.disabled = !meta.navigation?.prev_week_id || currentWeekIndex === 0;
+        nextBtn.disabled = !meta.navigation?.next_week_id || currentWeekIndex >= availableWeeks.length - 1;
+      } else {
+        // Fallback without metadata
+        document.getElementById('weekNumber').textContent = `Week ${currentWeekIndex + 1}`;
+        const date = new Date(weekDate);
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 6);
+        const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        document.getElementById('weekLabel').textContent = `${formatDate(date)}–${formatDate(endDate)}, ${date.getFullYear()}`;
+
+        document.getElementById('prevWeekBtn').disabled = currentWeekIndex === 0;
+        document.getElementById('nextWeekBtn').disabled = currentWeekIndex >= availableWeeks.length - 1;
+      }
+    }
+
+    function navigateToPrevWeek() {
+      if (currentWeekIndex > 0) {
+        loadWeek(currentWeekIndex - 1);
+      }
+    }
+
+    function navigateToNextWeek() {
+      if (currentWeekIndex < availableWeeks.length - 1) {
+        loadWeek(currentWeekIndex + 1);
+      }
+    }
+
+    // Update loadWeek to also update navigation
+    const originalLoadWeek = loadWeek;
+    async function loadWeek(index) {
+      if (index === currentWeekIndex && index === 0 && data.weekOf === availableWeeks[0]) {
+        updateWeekNavigation();
+        return;
+      }
+
+      currentWeekIndex = index;
+      const weekDate = availableWeeks[index];
+
+      try {
+        const response = await fetch(`data/weeks/${weekDate}.json`);
+        if (response.ok) {
+          data = await response.json();
+          days = data.whoop.daily.map(d => d.day);
+          renderDashboard();
+          renderWeekTabs();
+          updateWeekNavigation();
+        }
+      } catch (e) {
+        console.log('Using embedded data for week', weekDate);
+        updateWeekNavigation();
+      }
+    }
+
     // ===== INITIALIZATION =====
     // Check admin role and render dashboard
     checkAdminRole();
     renderWeekTabs();
     renderDashboard();
+    updateWeekNavigation();
+
+    // Preload metadata for enhanced display
+    preloadWeekMetadata();
   </script>
 </body>
 </html>

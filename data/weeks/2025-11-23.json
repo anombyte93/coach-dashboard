@@ -1,4 +1,55 @@
 {
+  "_meta": {
+    "week_id": "2025-W47-SUN",
+    "iso_week": "2025-W48",
+    "interval": {
+      "startDate": "2025-11-23",
+      "endDate": "2025-11-29"
+    },
+    "display_label": "Nov 23–29, 2025",
+    "temporalCoverage": "2025-11-23/2025-11-29",
+    "calendar_rules": {
+      "week_starts_on": "Sunday",
+      "week_ends_on": "Saturday",
+      "convention": "US Sunday-start week"
+    },
+    "navigation": {
+      "prev_week_id": "2025-W46-SUN",
+      "next_week_id": "2025-W48-SUN",
+      "week_number": 2,
+      "total_weeks_in_program": null,
+      "program_ref": "../program.json"
+    },
+    "data_completeness": {
+      "measurements": false,
+      "training": true,
+      "nutrition": true,
+      "whoop": true,
+      "wellbeing": true
+    }
+  },
+  "_ai_context": {
+    "summary": "Week 2 - Major breakthrough week! Client hit Squat PR and Bench PR. Flexibility work paying off significantly. Calorie intake normalized to 105% of target. Recovery improved to 64% avg despite variable days (15-87%). Sleep slightly improved at 6.0h avg. Low stress, positive mood. Strong momentum building.",
+    "status": "progressing",
+    "key_metrics": {
+      "weight_kg": null,
+      "avg_calories": 2862,
+      "avg_protein_g": 161,
+      "protein_target_pct": 83,
+      "avg_sleep_hours": 6.0,
+      "avg_recovery_pct": 64,
+      "total_steps": 65874
+    },
+    "flags": ["pr_week", "flexibility_breakthrough", "missing_measurements"],
+    "coach_priority": "Capitalize on PR momentum, continue flexibility work, get body measurements",
+    "week_vs_previous": {
+      "calories_delta": -585,
+      "recovery_delta": "+7%",
+      "sleep_delta": "+0.3h",
+      "steps_delta": "+9832",
+      "trend": "improving"
+    }
+  },
   "weekOf": "2025-11-23",
   "measurements": {
     "weight": null,
