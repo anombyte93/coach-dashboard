@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Coach Dashboard</title>
+  <style>
+    :root {
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--gray-100);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .login-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-header h1 {
+      font-size: 1.5rem;
+      color: var(--gray-800);
+      margin-bottom: 0.5rem;
+    }
+
+    .login-header p {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-800);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #2563eb;
+    }
+
+    .error-message {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--red);
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <h1>Coach Dashboard</h1>
+      <p>Enter your credentials to continue</p>
+    </div>
+
+    <div class="error-message" id="errorMessage">
+      Invalid username or password
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="btn">Login</button>
+    </form>
+  </div>
+
+  <script>
+    // Password hashes (SHA-256)
+    const CREDENTIALS = {
+      coach: {
+        hash: 'e0f167bc84b881bc06f6884fb48e02f41dfc5579e25489db6c6bde238e4aed15',
+        role: 'coach'
+      },
+      admin: {
+        hash: 'e414bf09bbf51d9c516b0fb3acd0b8a0ef371bfeb17e72024e1f8daa17b9bb73',
+        role: 'admin'
+      }
+    };
+
+    // Session expiry: 7 days
+    const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+
+    // Check if already logged in
+    function checkExistingSession() {
+      const session = localStorage.getItem('coachDashboardSession');
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          if (parsed.expiry > Date.now()) {
+            // Valid session, redirect based on role
+            redirectToDestination(parsed.role);
+            return true;
+          } else {
+            // Expired, clear it
+            localStorage.removeItem('coachDashboardSession');
+          }
+        } catch (e) {
+          localStorage.removeItem('coachDashboardSession');
+        }
+      }
+      return false;
+    }
+
+    function redirectToDestination(role) {
+      // Check if there's a redirect URL
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+
+      if (redirect === 'admin' && role === 'admin') {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // SHA-256 hash function
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Handle login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.toLowerCase().trim();
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('errorMessage');
+
+      errorEl.classList.remove('show');
+
+      // Check if username exists
+      if (!CREDENTIALS[username]) {
+        errorEl.classList.add('show');
+        return;
+      }
+
+      // Hash the password and compare
+      const passwordHash = await sha256(password);
+
+      if (passwordHash === CREDENTIALS[username].hash) {
+        // Success - create session
+        const session = {
+          role: CREDENTIALS[username].role,
+          expiry: Date.now() + SESSION_EXPIRY_MS,
+          token: crypto.randomUUID()
+        };
+
+        localStorage.setItem('coachDashboardSession', JSON.stringify(session));
+        redirectToDestination(session.role);
+      } else {
+        errorEl.classList.add('show');
+      }
+    });
+
+    // Check for existing session on load
+    checkExistingSession();
+  </script>
+</body>
+</html>

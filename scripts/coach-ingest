@@ -1,0 +1,1746 @@
+#!/usr/bin/env python3
+"""
+Coach Dashboard Data Ingestor
+============================
+Interactive CLI for logging fitness data optimized for coaching insights.
+
+Usage:
+    coach-ingest checkin          # Daily check-in (mood, energy, habits, blockers)
+    coach-ingest weekly           # Weekly summary (measurements, training, wins)
+    coach-ingest whoop            # Import WHOOP data (manual or CSV)
+    coach-ingest nutrition        # Import nutrition data (manual or MacroFactor)
+    coach-ingest prep             # Generate coach session prep
+    coach-ingest status           # Show current week progress
+    coach-ingest export           # Export current week to JSON
+
+Best Practices for Coach Visibility:
+- Log daily check-ins for mood/energy patterns
+- Track blockers honestly for coaching conversations
+- Note wins to celebrate progress
+- Weekly measurements for trend analysis
+"""
+
+import json
+import os
+import sys
+import re
+import csv
+import tempfile
+import zipfile
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Optional
+from io import StringIO
+
+# For Gmail API
+try:
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
+    import base64
+    GMAIL_AVAILABLE = True
+except ImportError:
+    GMAIL_AVAILABLE = False
+
+# For HTTP requests (WHOOP download)
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+
+# Rich for beautiful CLI
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.prompt import Prompt, IntPrompt, Confirm
+    from rich.table import Table
+    from rich.progress import track
+    from rich import print as rprint
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+    print("Installing rich for better CLI experience...")
+    os.system("pip install rich --quiet")
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.prompt import Prompt, IntPrompt, Confirm
+    from rich.table import Table
+    from rich.progress import track
+    from rich import print as rprint
+
+console = Console()
+
+# Paths
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_DIR = SCRIPT_DIR.parent
+DATA_DIR = PROJECT_DIR / "data" / "weeks"
+DAILY_DIR = PROJECT_DIR / "data" / "daily"
+
+# Ensure directories exist
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DAILY_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_current_week_start() -> str:
+    """Get Monday of the current week in YYYY-MM-DD format."""
+    today = datetime.now()
+    monday = today - timedelta(days=today.weekday())
+    return monday.strftime("%Y-%m-%d")
+
+
+def get_week_file(week_start: Optional[str] = None) -> Path:
+    """Get the JSON file path for a given week."""
+    if week_start is None:
+        week_start = get_current_week_start()
+    return DATA_DIR / f"{week_start}.json"
+
+
+def get_daily_file(date: Optional[str] = None) -> Path:
+    """Get the daily check-in file path."""
+    if date is None:
+        date = datetime.now().strftime("%Y-%m-%d")
+    return DAILY_DIR / f"{date}.json"
+
+
+def load_week_data(week_start: Optional[str] = None) -> dict:
+    """Load existing week data or create template."""
+    week_file = get_week_file(week_start)
+
+    if week_file.exists():
+        with open(week_file) as f:
+            return json.load(f)
+
+    # Create new week template
+    return {
+        "weekOf": week_start or get_current_week_start(),
+        "measurements": {
+            "weight": None,
+            "waist": None,
+            "chest": None,
+            "middle": None,
+            "butt": None,
+            "leg": None,
+            "steps": 0
+        },
+        "training": {
+            "overall_performance": "",
+            "completed": "",
+            "difficulty": "",
+            "recovery": "",
+            "enjoyment": ""
+        },
+        "nutrition": {
+            "daily": [],
+            "averages": {"calories": 0, "protein": 0, "carbs": 0, "fat": 0},
+            "targets": {"calories": 2725, "protein": 195, "carbs": 314, "fat": 102},
+            "notes": ""
+        },
+        "whoop": {
+            "daily": [],
+            "averages": {"hrv": 0, "rhr": 0, "sleep": 0, "strain": 0, "recovery": 0},
+            "sleep_metrics": {
+                "avg_duration": 0,
+                "avg_efficiency": 0,
+                "avg_need": 8.9,
+                "avg_debt": 0,
+                "consistency": 0
+            },
+            "interpretation": ""
+        },
+        "wellbeing": {
+            "pain": "",
+            "appetite": "",
+            "cravings": "",
+            "stress": "",
+            "mood": "",
+            "recovery_outside_gym": "",
+            "lifestyle_factors": ""
+        },
+        "wins": [],
+        "coach_questions": "",
+        # Coach-focused additions
+        "daily_checkins": [],
+        "blockers": [],
+        "velocity": {
+            "adherence_change": 0,
+            "mood_trend": "stable",
+            "energy_trend": "stable"
+        },
+        "coach_prep": {
+            "last_session_notes": "",
+            "focus_areas": [],
+            "suggested_topics": []
+        }
+    }
+
+
+def save_week_data(data: dict, week_start: Optional[str] = None):
+    """Save week data to JSON file."""
+    week_file = get_week_file(week_start or data.get("weekOf"))
+    with open(week_file, "w") as f:
+        json.dump(data, f, indent=2)
+    console.print(f"[green]Saved to {week_file}[/green]")
+
+
+def load_daily_checkin(date: Optional[str] = None) -> dict:
+    """Load existing daily check-in or create template."""
+    daily_file = get_daily_file(date)
+
+    if daily_file.exists():
+        with open(daily_file) as f:
+            return json.load(f)
+
+    return {
+        "date": date or datetime.now().strftime("%Y-%m-%d"),
+        "mood": None,  # 1-5
+        "energy": None,  # 1-5
+        "stress": None,  # 1-5
+        "sleep_quality": None,  # 1-5
+        "habits": {
+            "workout_completed": None,
+            "nutrition_on_track": None,
+            "water_intake": None,  # liters
+            "steps": None
+        },
+        "blockers": [],  # List of blocker tags
+        "blocker_notes": "",
+        "wins": [],
+        "reflection": "",
+        "tags": []  # work, family, health, social, etc.
+    }
+
+
+def save_daily_checkin(data: dict, date: Optional[str] = None):
+    """Save daily check-in to file."""
+    daily_file = get_daily_file(date or data.get("date"))
+    with open(daily_file, "w") as f:
+        json.dump(data, f, indent=2)
+    console.print(f"[green]Daily check-in saved to {daily_file}[/green]")
+
+
+# ============================================================================
+# DAILY CHECK-IN
+# ============================================================================
+
+MOOD_LABELS = {
+    1: "Very Low - Struggling",
+    2: "Low - Not great",
+    3: "Neutral - Okay",
+    4: "Good - Positive",
+    5: "Great - Excellent"
+}
+
+ENERGY_LABELS = {
+    1: "Exhausted - No energy",
+    2: "Low - Tired",
+    3: "Moderate - Functioning",
+    4: "Good - Energized",
+    5: "High - Very energized"
+}
+
+STRESS_LABELS = {
+    1: "None - Very calm",
+    2: "Low - Manageable",
+    3: "Moderate - Some pressure",
+    4: "High - Stressed",
+    5: "Very High - Overwhelmed"
+}
+
+BLOCKER_OPTIONS = [
+    "time_constraints",
+    "low_energy",
+    "poor_sleep",
+    "work_stress",
+    "family_obligations",
+    "social_events",
+    "travel",
+    "illness",
+    "motivation",
+    "forgot",
+    "equipment_issue",
+    "other"
+]
+
+
+def cmd_checkin():
+    """Interactive daily check-in for mood, energy, habits, and blockers."""
+    console.print(Panel.fit(
+        "[bold cyan]Daily Check-In[/bold cyan]\n"
+        "Quick 60-second log for your coach",
+        border_style="cyan"
+    ))
+
+    # Date selection
+    today = datetime.now().strftime("%Y-%m-%d")
+    date = Prompt.ask("Date", default=today)
+
+    data = load_daily_checkin(date)
+
+    # Quick state ratings
+    console.print("\n[bold]How are you feeling?[/bold]")
+    for k, v in MOOD_LABELS.items():
+        console.print(f"  {k}: {v}")
+    data["mood"] = IntPrompt.ask("Mood (1-5)", default=data["mood"] or 3)
+
+    console.print()
+    for k, v in ENERGY_LABELS.items():
+        console.print(f"  {k}: {v}")
+    data["energy"] = IntPrompt.ask("Energy (1-5)", default=data["energy"] or 3)
+
+    console.print()
+    for k, v in STRESS_LABELS.items():
+        console.print(f"  {k}: {v}")
+    data["stress"] = IntPrompt.ask("Stress (1-5)", default=data["stress"] or 3)
+
+    data["sleep_quality"] = IntPrompt.ask("Sleep quality (1-5)", default=data["sleep_quality"] or 3)
+
+    # Habits
+    console.print("\n[bold]Habits[/bold]")
+    data["habits"]["workout_completed"] = Confirm.ask("Workout completed?", default=False)
+    data["habits"]["nutrition_on_track"] = Confirm.ask("Nutrition on track?", default=False)
+    data["habits"]["water_intake"] = float(Prompt.ask("Water intake (liters)", default="2.0"))
+    data["habits"]["steps"] = IntPrompt.ask("Steps today", default=data["habits"]["steps"] or 0)
+
+    # Blockers (multi-select)
+    console.print("\n[bold]Blockers[/bold] (what got in the way today?)")
+    console.print("Options: " + ", ".join(BLOCKER_OPTIONS))
+    blocker_input = Prompt.ask("Enter blockers (comma-separated, or 'none')", default="none")
+    if blocker_input.lower() != "none":
+        data["blockers"] = [b.strip() for b in blocker_input.split(",") if b.strip() in BLOCKER_OPTIONS]
+        if data["blockers"]:
+            data["blocker_notes"] = Prompt.ask("Brief note on blockers", default="")
+    else:
+        data["blockers"] = []
+
+    # Wins
+    console.print("\n[bold]Wins[/bold] (anything to celebrate?)")
+    win = Prompt.ask("Today's win (or 'skip')", default="skip")
+    if win.lower() != "skip":
+        data["wins"] = [win]
+
+    # Reflection
+    data["reflection"] = Prompt.ask("What made today easier or harder? (optional)", default="")
+
+    # Tags
+    tag_input = Prompt.ask("Tags (work, family, health, social - comma-separated)", default="")
+    if tag_input:
+        data["tags"] = [t.strip() for t in tag_input.split(",")]
+
+    # Save
+    save_daily_checkin(data, date)
+
+    # Show summary
+    show_daily_summary(data)
+
+    # Aggregate to weekly
+    aggregate_to_weekly(date)
+
+
+def show_daily_summary(data: dict):
+    """Display a summary of the daily check-in."""
+    table = Table(title=f"Check-in Summary: {data['date']}")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+
+    table.add_row("Mood", f"{data['mood']}/5 - {MOOD_LABELS.get(data['mood'], 'N/A')}")
+    table.add_row("Energy", f"{data['energy']}/5 - {ENERGY_LABELS.get(data['energy'], 'N/A')}")
+    table.add_row("Stress", f"{data['stress']}/5 - {STRESS_LABELS.get(data['stress'], 'N/A')}")
+    table.add_row("Sleep Quality", f"{data['sleep_quality']}/5")
+    table.add_row("Workout", "Yes" if data['habits']['workout_completed'] else "[red]No[/red]")
+    table.add_row("Nutrition", "On track" if data['habits']['nutrition_on_track'] else "[yellow]Off track[/yellow]")
+    table.add_row("Water", f"{data['habits']['water_intake']}L")
+    table.add_row("Steps", str(data['habits']['steps']))
+
+    if data['blockers']:
+        table.add_row("Blockers", ", ".join(data['blockers']))
+    if data['wins']:
+        table.add_row("Wins", ", ".join(data['wins']))
+
+    console.print(table)
+
+
+def aggregate_to_weekly(date: str):
+    """Aggregate daily check-ins into weekly data."""
+    # Find week start
+    dt = datetime.strptime(date, "%Y-%m-%d")
+    week_start = (dt - timedelta(days=dt.weekday())).strftime("%Y-%m-%d")
+
+    # Load week data
+    week_data = load_week_data(week_start)
+
+    # Collect all daily check-ins for the week
+    daily_checkins = []
+    for i in range(7):
+        day_date = (datetime.strptime(week_start, "%Y-%m-%d") + timedelta(days=i)).strftime("%Y-%m-%d")
+        daily_file = get_daily_file(day_date)
+        if daily_file.exists():
+            with open(daily_file) as f:
+                daily_checkins.append(json.load(f))
+
+    week_data["daily_checkins"] = daily_checkins
+
+    # Calculate velocity metrics
+    if len(daily_checkins) >= 2:
+        moods = [d["mood"] for d in daily_checkins if d.get("mood")]
+        energies = [d["energy"] for d in daily_checkins if d.get("energy")]
+
+        if len(moods) >= 2:
+            week_data["velocity"]["mood_trend"] = "improving" if moods[-1] > moods[0] else ("declining" if moods[-1] < moods[0] else "stable")
+        if len(energies) >= 2:
+            week_data["velocity"]["energy_trend"] = "improving" if energies[-1] > energies[0] else ("declining" if energies[-1] < energies[0] else "stable")
+
+    # Aggregate blockers
+    all_blockers = []
+    for checkin in daily_checkins:
+        all_blockers.extend(checkin.get("blockers", []))
+
+    # Count blocker frequency
+    blocker_counts = {}
+    for b in all_blockers:
+        blocker_counts[b] = blocker_counts.get(b, 0) + 1
+
+    week_data["blockers"] = [{"blocker": k, "count": v} for k, v in sorted(blocker_counts.items(), key=lambda x: -x[1])]
+
+    # Aggregate wins
+    all_wins = []
+    for checkin in daily_checkins:
+        all_wins.extend(checkin.get("wins", []))
+    week_data["wins"] = list(set(week_data.get("wins", []) + all_wins))
+
+    save_week_data(week_data, week_start)
+    console.print(f"[dim]Weekly data updated for {week_start}[/dim]")
+
+
+# ============================================================================
+# WEEKLY SUMMARY
+# ============================================================================
+
+def cmd_weekly():
+    """Interactive weekly summary entry."""
+    console.print(Panel.fit(
+        "[bold cyan]Weekly Summary[/bold cyan]\n"
+        "Measurements, training notes, and coach questions",
+        border_style="cyan"
+    ))
+
+    week_start = Prompt.ask("Week start date (YYYY-MM-DD)", default=get_current_week_start())
+    data = load_week_data(week_start)
+
+    # Measurements
+    console.print("\n[bold]Body Measurements[/bold]")
+    data["measurements"]["weight"] = float(Prompt.ask("Weight (kg)", default=str(data["measurements"]["weight"] or "")))
+    data["measurements"]["waist"] = float(Prompt.ask("Waist (cm)", default=str(data["measurements"]["waist"] or "")))
+    data["measurements"]["chest"] = float(Prompt.ask("Chest (cm)", default=str(data["measurements"]["chest"] or "")))
+    data["measurements"]["middle"] = float(Prompt.ask("Middle/Belly (cm)", default=str(data["measurements"]["middle"] or "")))
+    data["measurements"]["butt"] = float(Prompt.ask("Butt (cm)", default=str(data["measurements"]["butt"] or "")))
+    data["measurements"]["leg"] = float(Prompt.ask("Leg/Thigh (cm)", default=str(data["measurements"]["leg"] or "")))
+    data["measurements"]["steps"] = IntPrompt.ask("Total steps this week", default=data["measurements"]["steps"] or 0)
+
+    # Training
+    console.print("\n[bold]Training This Week[/bold]")
+    data["training"]["overall_performance"] = Prompt.ask("Overall performance", default=data["training"]["overall_performance"])
+    data["training"]["completed"] = Prompt.ask("Workouts completed", default=data["training"]["completed"])
+    data["training"]["difficulty"] = Prompt.ask("Any difficulties?", default=data["training"]["difficulty"])
+    data["training"]["recovery"] = Prompt.ask("How was recovery?", default=data["training"]["recovery"])
+    data["training"]["enjoyment"] = Prompt.ask("Enjoyment level", default=data["training"]["enjoyment"])
+
+    # Wellbeing
+    console.print("\n[bold]Wellbeing[/bold]")
+    data["wellbeing"]["pain"] = Prompt.ask("Pain/soreness", default=data["wellbeing"]["pain"])
+    data["wellbeing"]["appetite"] = Prompt.ask("Appetite", default=data["wellbeing"]["appetite"])
+    data["wellbeing"]["cravings"] = Prompt.ask("Cravings", default=data["wellbeing"]["cravings"])
+    data["wellbeing"]["stress"] = Prompt.ask("Stress level", default=data["wellbeing"]["stress"])
+    data["wellbeing"]["mood"] = Prompt.ask("Overall mood", default=data["wellbeing"]["mood"])
+    data["wellbeing"]["recovery_outside_gym"] = Prompt.ask("Recovery activities", default=data["wellbeing"]["recovery_outside_gym"])
+    data["wellbeing"]["lifestyle_factors"] = Prompt.ask("Lifestyle factors affecting you", default=data["wellbeing"]["lifestyle_factors"])
+
+    # Wins
+    console.print("\n[bold]Wins This Week[/bold]")
+    console.print("Current wins: " + ", ".join(data["wins"]) if data["wins"] else "No wins logged yet")
+    new_win = Prompt.ask("Add a win (or 'skip')", default="skip")
+    if new_win.lower() != "skip":
+        data["wins"].append(new_win)
+
+    # Coach questions
+    console.print("\n[bold]Questions for Your Coach[/bold]")
+    data["coach_questions"] = Prompt.ask("What do you want to discuss?", default=data["coach_questions"])
+
+    save_week_data(data, week_start)
+
+
+# ============================================================================
+# WHOOP DATA IMPORT
+# ============================================================================
+
+def cmd_whoop():
+    """Import WHOOP data manually or from export."""
+    console.print(Panel.fit(
+        "[bold cyan]WHOOP Data Import[/bold cyan]\n"
+        "Enter daily HRV, RHR, sleep, strain, recovery",
+        border_style="cyan"
+    ))
+
+    week_start = Prompt.ask("Week start date", default=get_current_week_start())
+    data = load_week_data(week_start)
+
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    daily_data = []
+
+    console.print("\n[bold]Enter WHOOP metrics for each day[/bold]")
+    console.print("[dim]Press Enter to skip a day, or enter 'done' to finish early[/dim]\n")
+
+    for day in days:
+        console.print(f"[cyan]{day}[/cyan]")
+        hrv = Prompt.ask("  HRV (ms)", default="")
+
+        if hrv.lower() == "done":
+            break
+        if not hrv:
+            continue
+
+        daily_data.append({
+            "day": day,
+            "hrv": int(hrv),
+            "rhr": IntPrompt.ask("  RHR (bpm)", default=70),
+            "sleep": float(Prompt.ask("  Sleep (hours)", default="7.0")),
+            "strain": float(Prompt.ask("  Strain", default="10.0")),
+            "recovery": IntPrompt.ask("  Recovery (%)", default=60)
+        })
+
+    if daily_data:
+        data["whoop"]["daily"] = daily_data
+
+        # Calculate averages
+        data["whoop"]["averages"] = {
+            "hrv": round(sum(d["hrv"] for d in daily_data) / len(daily_data)),
+            "rhr": round(sum(d["rhr"] for d in daily_data) / len(daily_data)),
+            "sleep": round(sum(d["sleep"] for d in daily_data) / len(daily_data), 1),
+            "strain": round(sum(d["strain"] for d in daily_data) / len(daily_data), 1),
+            "recovery": round(sum(d["recovery"] for d in daily_data) / len(daily_data))
+        }
+
+        # Generate interpretation
+        avg = data["whoop"]["averages"]
+        interpretation_parts = []
+
+        if avg["recovery"] < 50:
+            interpretation_parts.append(f"Low recovery ({avg['recovery']}%) - consider reducing intensity")
+        elif avg["recovery"] < 70:
+            interpretation_parts.append(f"Moderate recovery ({avg['recovery']}%)")
+        else:
+            interpretation_parts.append(f"Good recovery ({avg['recovery']}%) - ready for high intensity")
+
+        if avg["sleep"] < 7:
+            interpretation_parts.append(f"Sleep deficit (averaging {avg['sleep']}h)")
+
+        if avg["rhr"] > 70:
+            interpretation_parts.append(f"Elevated RHR ({avg['rhr']} bpm) - monitor stress/recovery")
+
+        data["whoop"]["interpretation"] = ". ".join(interpretation_parts)
+
+        save_week_data(data, week_start)
+
+
+# ============================================================================
+# WHOOP GMAIL AUTO-IMPORT
+# ============================================================================
+
+# Gmail API scopes - using gmail.modify since that's what the MCP uses (includes read)
+GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+# Use existing Gmail MCP token if available, fall back to local config
+GMAIL_MCP_TOKEN_PATH = Path.home() / ".gmail-mcp" / "credentials.json"
+GMAIL_MCP_CREDS_PATH = Path.home() / ".gmail-mcp" / "gcp-oauth.keys.json"
+GMAIL_TOKEN_PATH = Path.home() / ".config" / "coach-ingest" / "gmail_token.json"
+GMAIL_CREDS_PATH = Path.home() / ".config" / "coach-ingest" / "credentials.json"
+
+
+def get_gmail_service():
+    """Get authenticated Gmail API service."""
+    if not GMAIL_AVAILABLE:
+        console.print("[red]Gmail API not available. Install with:[/red]")
+        console.print("  pip install google-auth-oauthlib google-api-python-client")
+        return None
+
+    creds = None
+
+    # Try 1: Use existing Gmail MCP token (already authenticated)
+    if GMAIL_MCP_TOKEN_PATH.exists() and GMAIL_MCP_CREDS_PATH.exists():
+        console.print("[dim]Using existing Gmail MCP credentials...[/dim]")
+        try:
+            with open(GMAIL_MCP_TOKEN_PATH) as f:
+                token_data = json.load(f)
+            with open(GMAIL_MCP_CREDS_PATH) as f:
+                creds_data = json.load(f)
+
+            # Convert MCP token format to google-auth format
+            client_id = creds_data.get('installed', {}).get('client_id')
+            client_secret = creds_data.get('installed', {}).get('client_secret')
+
+            creds = Credentials(
+                token=token_data.get('access_token'),
+                refresh_token=token_data.get('refresh_token'),
+                token_uri='https://oauth2.googleapis.com/token',
+                client_id=client_id,
+                client_secret=client_secret,
+                scopes=GMAIL_SCOPES
+            )
+
+            # Refresh if expired
+            if creds.expired and creds.refresh_token:
+                console.print("[dim]Refreshing token...[/dim]")
+                creds.refresh(Request())
+
+            return build('gmail', 'v1', credentials=creds)
+        except Exception as e:
+            console.print(f"[yellow]MCP token failed: {e}[/yellow]")
+            console.print("[dim]Falling back to local credentials...[/dim]")
+
+    # Try 2: Use local coach-ingest token
+    GMAIL_TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    if GMAIL_TOKEN_PATH.exists():
+        try:
+            creds = Credentials.from_authorized_user_file(str(GMAIL_TOKEN_PATH), GMAIL_SCOPES)
+        except Exception:
+            pass
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not GMAIL_CREDS_PATH.exists():
+                console.print(f"[red]Gmail credentials not found[/red]")
+                console.print("\n[bold]Setup instructions:[/bold]")
+                console.print("1. Go to https://console.cloud.google.com/apis/credentials")
+                console.print("2. Create OAuth 2.0 Client ID (Desktop app)")
+                console.print("3. Download JSON and save to:")
+                console.print(f"   {GMAIL_CREDS_PATH}")
+                console.print("\n[dim]Or ensure Gmail MCP is set up at ~/.gmail-mcp/[/dim]")
+                return None
+
+            flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDS_PATH), GMAIL_SCOPES)
+            creds = flow.run_local_server(port=0)
+
+        with open(GMAIL_TOKEN_PATH, 'w') as token:
+            token.write(creds.to_json())
+
+    return build('gmail', 'v1', credentials=creds)
+
+
+def extract_whoop_download_link(email_body: str) -> Optional[str]:
+    """Extract S3 download link from WHOOP email body."""
+    # Look for the S3 presigned URL pattern
+    patterns = [
+        r'https://s3[^"\s<>]+whoop[^"\s<>]+\.zip[^"\s<>]*',
+        r'https://[^"\s<>]*amazonaws\.com[^"\s<>]+\.zip[^"\s<>]*',
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, email_body)
+        if match:
+            url = match.group(0)
+            # Clean up URL encoding issues
+            url = url.replace('&amp;', '&')
+            return url
+
+    return None
+
+
+def download_whoop_export(url: str, dest_dir: Path) -> Optional[Path]:
+    """Download WHOOP export ZIP file."""
+    if not REQUESTS_AVAILABLE:
+        console.print("[red]requests library not available. Install with:[/red]")
+        console.print("  pip install requests")
+        return None
+
+    console.print(f"[dim]Downloading WHOOP export...[/dim]")
+
+    try:
+        response = requests.get(url, stream=True, timeout=60)
+        response.raise_for_status()
+
+        zip_path = dest_dir / "whoop_export.zip"
+        with open(zip_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        console.print(f"[green]Downloaded to {zip_path}[/green]")
+        return zip_path
+
+    except requests.exceptions.RequestException as e:
+        console.print(f"[red]Download failed: {e}[/red]")
+        return None
+
+
+def parse_whoop_physiological_csv(csv_path: Path, debug: bool = False) -> list:
+    """Parse WHOOP physiological_cycles.csv into daily data format."""
+    daily_data = []
+
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+
+        # Debug: show column names
+        if debug:
+            console.print(f"[dim]CSV columns: {reader.fieldnames}[/dim]")
+
+        for row in reader:
+            try:
+                # Parse date from cycle start
+                date_str = row.get('Cycle start time', row.get('cycle_start_time', ''))
+                if not date_str:
+                    continue
+
+                # Parse the date (format varies: "2025-12-01 07:30:00" or ISO format)
+                if 'T' in date_str:
+                    dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                else:
+                    dt = datetime.strptime(date_str.split()[0], '%Y-%m-%d')
+
+                day_name = dt.strftime('%a')
+
+                # Extract metrics (handle different column naming conventions)
+                def get_float(keys, default=0.0):
+                    for key in keys if isinstance(keys, list) else [keys]:
+                        val = row.get(key, '')
+                        if val and val != '':
+                            try:
+                                return float(val)
+                            except ValueError:
+                                continue
+                    return default
+
+                def get_int(keys, default=0):
+                    return int(get_float(keys, default))
+
+                # Sleep: Try duration (min) first, then performance %
+                # Duration columns are in minutes - convert to hours
+                sleep_min = get_float(['Asleep duration (min)', 'Total in bed duration (min)', 'Sleep duration (min)'])
+                if sleep_min > 60:  # Valid minutes (1+ hour)
+                    sleep_hours = round(sleep_min / 60, 1)
+                else:
+                    # Fallback: sleep performance % (keep as-is, indicates quality)
+                    # But cap at reasonable sleep hours (4-12h)
+                    sleep_perf = get_float(['Sleep performance %', 'sleep_performance_percentage'])
+                    # Sleep performance 0-100% roughly maps to 4-10h for display
+                    sleep_hours = round((sleep_perf / 100) * 8, 1) if sleep_perf > 0 else 7.0
+
+                daily_data.append({
+                    "day": day_name,
+                    "date": dt.strftime('%Y-%m-%d'),
+                    "hrv": get_int(['Heart rate variability (ms)', 'hrv_rmssd_milli', 'HRV']),
+                    "rhr": get_int(['Resting heart rate (bpm)', 'resting_heart_rate_bpm', 'RHR']),
+                    "sleep": sleep_hours,
+                    "strain": round(get_float(['Day Strain', 'day_strain', 'Strain']), 1),
+                    "recovery": get_int(['Recovery score %', 'recovery_score', 'Recovery'])
+                })
+
+            except (ValueError, KeyError) as e:
+                console.print(f"[yellow]Skipping row: {e}[/yellow]")
+                continue
+
+    # Sort by date and get last 7 days
+    daily_data.sort(key=lambda x: x['date'])
+    return daily_data[-7:] if len(daily_data) > 7 else daily_data
+
+
+def parse_whoop_sleep_csv(csv_path: Path) -> dict:
+    """Parse WHOOP sleeps.csv for sleep metrics."""
+    sleep_data = []
+
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            try:
+                def get_float(keys, default=0.0):
+                    for key in keys if isinstance(keys, list) else [keys]:
+                        val = row.get(key, '')
+                        if val and val != '':
+                            try:
+                                return float(val)
+                            except ValueError:
+                                continue
+                    return default
+
+                sleep_data.append({
+                    "duration_min": get_float(['Total in bed duration (min)', 'total_in_bed_time_milli']) / 60000 if get_float(['total_in_bed_time_milli']) > 0 else get_float(['Total in bed duration (min)']),
+                    "efficiency": get_float(['Sleep efficiency %', 'sleep_efficiency_percentage']),
+                    "need_min": get_float(['Sleep need (min)', 'sleep_need_baseline_milli']) / 60000 if get_float(['sleep_need_baseline_milli']) > 0 else get_float(['Sleep need (min)']),
+                    "debt_min": get_float(['Sleep debt (min)', 'sleep_debt_milli']) / 60000 if get_float(['sleep_debt_milli']) > 0 else get_float(['Sleep debt (min)']),
+                })
+            except (ValueError, KeyError):
+                continue
+
+    # Calculate averages from last 7 sleeps
+    recent = sleep_data[-7:] if len(sleep_data) > 7 else sleep_data
+    if recent:
+        return {
+            "avg_duration": round(sum(s['duration_min'] for s in recent) / len(recent)),
+            "avg_efficiency": round(sum(s['efficiency'] for s in recent) / len(recent)),
+            "avg_need": round(sum(s['need_min'] for s in recent) / len(recent)),
+            "avg_debt": round(sum(s['debt_min'] for s in recent) / len(recent)),
+            "consistency": 0  # Would need more complex calculation
+        }
+    return {}
+
+
+def cmd_whoop_url(url: str = None):
+    """Import WHOOP data from a direct download URL."""
+    console.print(Panel.fit(
+        "[bold cyan]WHOOP URL Import[/bold cyan]\n"
+        "Downloads WHOOP export from a direct S3 URL",
+        border_style="cyan"
+    ))
+
+    if not url:
+        url = Prompt.ask("Enter WHOOP export download URL")
+
+    if not url or not url.startswith('http'):
+        console.print("[red]Invalid URL[/red]")
+        return
+
+    # Download to temp directory
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+
+        zip_path = download_whoop_export(url, temp_path)
+        if not zip_path:
+            return
+
+        # Extract and process (reuse the same logic)
+        _process_whoop_zip(zip_path, temp_path)
+
+
+def _process_whoop_zip(zip_path: Path, temp_path: Path):
+    """Process a downloaded WHOOP ZIP file."""
+    # Extract ZIP
+    console.print("[dim]Extracting ZIP...[/dim]")
+    extract_dir = temp_path / "extracted"
+    extract_dir.mkdir(exist_ok=True)
+
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_dir)
+
+    # List extracted files
+    csv_files = list(extract_dir.rglob("*.csv"))
+    console.print(f"[dim]Found {len(csv_files)} CSV files[/dim]")
+
+    # Find and parse physiological_cycles.csv
+    physio_csv = None
+    sleep_csv = None
+
+    for csv_file in csv_files:
+        if 'physiological' in csv_file.name.lower():
+            physio_csv = csv_file
+        elif 'sleep' in csv_file.name.lower():
+            sleep_csv = csv_file
+
+    if not physio_csv:
+        console.print("[red]physiological_cycles.csv not found in export[/red]")
+        console.print(f"[dim]Available files: {[f.name for f in csv_files]}[/dim]")
+        return
+
+    # Parse the CSV
+    console.print(f"[dim]Parsing {physio_csv.name}...[/dim]")
+    daily_data = parse_whoop_physiological_csv(physio_csv)
+
+    if not daily_data:
+        console.print("[red]No data parsed from CSV[/red]")
+        return
+
+    console.print(f"[green]Parsed {len(daily_data)} days of data[/green]")
+
+    # Parse sleep data if available
+    sleep_metrics = {}
+    if sleep_csv:
+        console.print(f"[dim]Parsing {sleep_csv.name}...[/dim]")
+        sleep_metrics = parse_whoop_sleep_csv(sleep_csv)
+
+    # Determine week start from data
+    if daily_data:
+        first_date = datetime.strptime(daily_data[0]['date'], '%Y-%m-%d')
+        week_start = (first_date - timedelta(days=first_date.weekday())).strftime('%Y-%m-%d')
+    else:
+        week_start = get_current_week_start()
+
+    week_start = Prompt.ask("Week start date", default=week_start)
+
+    # Load and update week data
+    data = load_week_data(week_start)
+
+    # Convert to dashboard format (remove date field, keep day)
+    for d in daily_data:
+        del d['date']
+
+    data["whoop"]["daily"] = daily_data
+
+    # Calculate averages
+    data["whoop"]["averages"] = {
+        "hrv": round(sum(d["hrv"] for d in daily_data) / len(daily_data)),
+        "rhr": round(sum(d["rhr"] for d in daily_data) / len(daily_data)),
+        "sleep": round(sum(d["sleep"] for d in daily_data) / len(daily_data), 1),
+        "strain": round(sum(d["strain"] for d in daily_data) / len(daily_data), 1),
+        "recovery": round(sum(d["recovery"] for d in daily_data) / len(daily_data))
+    }
+
+    # Add sleep metrics
+    if sleep_metrics:
+        data["whoop"]["sleep_metrics"] = sleep_metrics
+
+    # Generate interpretation
+    avg = data["whoop"]["averages"]
+    interpretation_parts = []
+
+    if avg["recovery"] < 50:
+        interpretation_parts.append(f"Low recovery ({avg['recovery']}%) - consider reducing intensity")
+    elif avg["recovery"] < 70:
+        interpretation_parts.append(f"Moderate recovery ({avg['recovery']}%)")
+    else:
+        interpretation_parts.append(f"Good recovery ({avg['recovery']}%) - ready for high intensity")
+
+    if avg["sleep"] < 7:
+        interpretation_parts.append(f"Sleep deficit (averaging {avg['sleep']}h)")
+
+    if avg["rhr"] > 70:
+        interpretation_parts.append(f"Elevated RHR ({avg['rhr']} bpm) - monitor stress/recovery")
+
+    data["whoop"]["interpretation"] = ". ".join(interpretation_parts)
+
+    save_week_data(data, week_start)
+
+    # Show summary
+    console.print("\n[bold green]WHOOP data imported successfully![/bold green]")
+
+    table = Table(title="Imported WHOOP Data")
+    table.add_column("Day", style="cyan")
+    table.add_column("HRV")
+    table.add_column("RHR")
+    table.add_column("Sleep")
+    table.add_column("Strain")
+    table.add_column("Recovery")
+
+    for d in daily_data:
+        recovery_style = "green" if d["recovery"] >= 70 else ("yellow" if d["recovery"] >= 50 else "red")
+        table.add_row(
+            d["day"],
+            str(d["hrv"]),
+            str(d["rhr"]),
+            f"{d['sleep']}h",
+            str(d["strain"]),
+            f"[{recovery_style}]{d['recovery']}%[/{recovery_style}]"
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]Interpretation: {data['whoop']['interpretation']}[/dim]")
+
+
+def cmd_whoop_gmail():
+    """Auto-import WHOOP data from Gmail export email."""
+    console.print(Panel.fit(
+        "[bold cyan]WHOOP Gmail Auto-Import[/bold cyan]\n"
+        "Fetches latest WHOOP export from your email",
+        border_style="cyan"
+    ))
+
+    # Get Gmail service
+    service = get_gmail_service()
+    if not service:
+        return
+
+    # Search for WHOOP export emails
+    console.print("[dim]Searching for WHOOP export emails...[/dim]")
+
+    try:
+        results = service.users().messages().list(
+            userId='me',
+            q='subject:"Your WHOOP Export is Ready" from:whoop.com',
+            maxResults=5
+        ).execute()
+
+        messages = results.get('messages', [])
+
+        if not messages:
+            console.print("[yellow]No WHOOP export emails found[/yellow]")
+            console.print("[dim]Make sure you've requested an export from the WHOOP app[/dim]")
+            return
+
+        console.print(f"[green]Found {len(messages)} WHOOP export email(s)[/green]")
+
+        # Get the most recent email
+        msg = service.users().messages().get(
+            userId='me',
+            id=messages[0]['id'],
+            format='full'
+        ).execute()
+
+        # Extract email date
+        headers = {h['name']: h['value'] for h in msg['payload']['headers']}
+        email_date = headers.get('Date', 'Unknown date')
+        console.print(f"[dim]Latest export from: {email_date}[/dim]")
+
+        # Get email body
+        body = ""
+        if 'parts' in msg['payload']:
+            for part in msg['payload']['parts']:
+                if part['mimeType'] == 'text/plain':
+                    body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
+                    break
+                elif part['mimeType'] == 'text/html':
+                    body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
+        elif 'body' in msg['payload'] and 'data' in msg['payload']['body']:
+            body = base64.urlsafe_b64decode(msg['payload']['body']['data']).decode('utf-8')
+
+        # Extract download link
+        download_url = extract_whoop_download_link(body)
+
+        if not download_url:
+            console.print("[red]Could not find download link in email[/red]")
+            console.print("[dim]The export link may have expired (valid for 7 days)[/dim]")
+            return
+
+        console.print("[green]Found download link[/green]")
+
+        # Use the URL import function
+        cmd_whoop_url(download_url)
+
+    except Exception as e:
+        console.print(f"[red]Error accessing Gmail: {e}[/red]")
+        import traceback
+        traceback.print_exc()
+
+
+# ============================================================================
+# MACROFACTOR GMAIL AUTO-IMPORT
+# ============================================================================
+
+def extract_gmail_attachment(service, message_id: str, filename_pattern: str, dest_dir: Path) -> Optional[Path]:
+    """Download an attachment from a Gmail message matching the filename pattern."""
+    try:
+        msg = service.users().messages().get(
+            userId='me',
+            id=message_id,
+            format='full'
+        ).execute()
+
+        parts = msg['payload'].get('parts', [])
+        for part in parts:
+            if part.get('filename') and filename_pattern.lower() in part['filename'].lower():
+                attachment_id = part['body'].get('attachmentId')
+                if attachment_id:
+                    attachment = service.users().messages().attachments().get(
+                        userId='me',
+                        messageId=message_id,
+                        id=attachment_id
+                    ).execute()
+
+                    file_data = base64.urlsafe_b64decode(attachment['data'])
+                    file_path = dest_dir / part['filename']
+                    with open(file_path, 'wb') as f:
+                        f.write(file_data)
+
+                    console.print(f"[green]Downloaded: {part['filename']}[/green]")
+                    return file_path
+
+        return None
+    except Exception as e:
+        console.print(f"[red]Failed to extract attachment: {e}[/red]")
+        return None
+
+
+def parse_macrofactor_xlsx(xlsx_path: Path, week_start: str) -> tuple[list, dict]:
+    """Parse MacroFactor XLSX export and filter to relevant week.
+
+    Returns: (daily_data, averages)
+    """
+    try:
+        import pandas as pd
+    except ImportError:
+        console.print("[red]pandas not available. Install with:[/red]")
+        console.print("  pip install pandas openpyxl")
+        return [], {}
+
+    df = pd.read_excel(xlsx_path)
+
+    # Convert Date column to datetime
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    # Calculate week boundaries (Monday to Sunday)
+    week_start_dt = datetime.strptime(week_start, '%Y-%m-%d')
+    week_end_dt = week_start_dt + timedelta(days=6)
+
+    # Filter to the relevant week
+    mask = (df['Date'] >= week_start_dt) & (df['Date'] <= week_end_dt)
+    week_df = df[mask].copy()
+
+    if week_df.empty:
+        console.print(f"[yellow]No data found for week {week_start}[/yellow]")
+        available_dates = df['Date'].dt.strftime('%Y-%m-%d').tolist()
+        console.print(f"[dim]Available dates: {available_dates[:5]}...{available_dates[-5:]}[/dim]")
+        return [], {}
+
+    console.print(f"[green]Found {len(week_df)} days of data for week {week_start}[/green]")
+
+    # Extract daily nutrition data
+    daily_data = []
+    day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+    for _, row in week_df.iterrows():
+        day_idx = row['Date'].weekday()
+        daily_data.append({
+            "day": day_names[day_idx],
+            "date": row['Date'].strftime('%Y-%m-%d'),
+            "calories": int(row.get('Calories (kcal)', 0)),
+            "protein": int(row.get('Protein (g)', 0)),
+            "carbs": int(row.get('Carbs (g)', 0)),
+            "fat": int(row.get('Fat (g)', 0)),
+            # Additional micronutrients (optional)
+            "fiber": round(row.get('Fiber (g)', 0), 1) if pd.notna(row.get('Fiber (g)')) else None,
+            "sodium": int(row.get('Sodium (mg)', 0)) if pd.notna(row.get('Sodium (mg)')) else None,
+            "steps": int(row.get('Steps', 0)) if pd.notna(row.get('Steps')) else None,
+        })
+
+    # Sort by day of week
+    daily_data.sort(key=lambda x: day_names.index(x['day']))
+
+    # Calculate averages
+    if daily_data:
+        averages = {
+            "calories": round(sum(d["calories"] for d in daily_data) / len(daily_data)),
+            "protein": round(sum(d["protein"] for d in daily_data) / len(daily_data)),
+            "carbs": round(sum(d["carbs"] for d in daily_data) / len(daily_data)),
+            "fat": round(sum(d["fat"] for d in daily_data) / len(daily_data))
+        }
+    else:
+        averages = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
+
+    # Clean up daily data (remove date field for dashboard format)
+    for d in daily_data:
+        del d['date']
+        # Remove None values
+        d = {k: v for k, v in d.items() if v is not None}
+
+    return daily_data, averages
+
+
+def cmd_macrofactor_gmail():
+    """Auto-import MacroFactor nutrition data from Gmail export email."""
+    console.print(Panel.fit(
+        "[bold cyan]MacroFactor Gmail Auto-Import[/bold cyan]\n"
+        "Fetches latest MacroFactor export from your email",
+        border_style="cyan"
+    ))
+
+    # Get Gmail service
+    service = get_gmail_service()
+    if not service:
+        return
+
+    # Search for MacroFactor export emails
+    console.print("[dim]Searching for MacroFactor export emails...[/dim]")
+
+    try:
+        # Search for MacroFactor emails with attachments
+        results = service.users().messages().list(
+            userId='me',
+            q='subject:"MacroFactor" has:attachment filename:xlsx',
+            maxResults=10
+        ).execute()
+
+        messages = results.get('messages', [])
+
+        if not messages:
+            # Try alternative search
+            results = service.users().messages().list(
+                userId='me',
+                q='macrofactor has:attachment',
+                maxResults=10
+            ).execute()
+            messages = results.get('messages', [])
+
+        if not messages:
+            console.print("[yellow]No MacroFactor export emails found[/yellow]")
+            console.print("[dim]Make sure you've emailed the MacroFactor export to yourself[/dim]")
+            return
+
+        console.print(f"[green]Found {len(messages)} potential MacroFactor email(s)[/green]")
+
+        # Show available emails
+        email_options = []
+        for i, msg_info in enumerate(messages[:5]):
+            msg = service.users().messages().get(
+                userId='me',
+                id=msg_info['id'],
+                format='metadata',
+                metadataHeaders=['Subject', 'Date']
+            ).execute()
+
+            headers = {h['name']: h['value'] for h in msg['payload']['headers']}
+            email_options.append({
+                'id': msg_info['id'],
+                'subject': headers.get('Subject', 'No subject'),
+                'date': headers.get('Date', 'Unknown date')
+            })
+            console.print(f"  [{i+1}] {headers.get('Subject', 'No subject')[:50]} ({headers.get('Date', '')[:16]})")
+
+        # Select email (default to most recent)
+        selection = IntPrompt.ask("Select email number", default=1)
+        if selection < 1 or selection > len(email_options):
+            console.print("[red]Invalid selection[/red]")
+            return
+
+        selected_email = email_options[selection - 1]
+
+        # Download attachment
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            xlsx_path = extract_gmail_attachment(
+                service,
+                selected_email['id'],
+                'macrofactor',  # Look for files containing "macrofactor"
+                temp_path
+            )
+
+            if not xlsx_path:
+                # Try looking for any xlsx
+                xlsx_path = extract_gmail_attachment(
+                    service,
+                    selected_email['id'],
+                    '.xlsx',
+                    temp_path
+                )
+
+            if not xlsx_path:
+                console.print("[red]No MacroFactor XLSX attachment found in email[/red]")
+                return
+
+            # Ask for week to import
+            week_start = Prompt.ask("Week start date (YYYY-MM-DD)", default=get_current_week_start())
+
+            # Parse the XLSX and filter to week
+            daily_data, averages = parse_macrofactor_xlsx(xlsx_path, week_start)
+
+            if not daily_data:
+                return
+
+            # Load and update week data
+            data = load_week_data(week_start)
+
+            # Update nutrition section
+            data["nutrition"]["daily"] = daily_data
+            data["nutrition"]["averages"] = averages
+
+            # Generate notes based on targets
+            targets = data["nutrition"]["targets"]
+            notes_parts = []
+
+            cal_pct = round(averages["calories"] / targets["calories"] * 100) if targets["calories"] else 100
+            prot_pct = round(averages["protein"] / targets["protein"] * 100) if targets["protein"] else 100
+
+            notes_parts.append(f"{cal_pct}% of calorie target ({averages['calories']} avg)")
+            notes_parts.append(f"Protein at {prot_pct}% ({averages['protein']}g avg)")
+
+            if averages["fat"] > targets["fat"] * 1.2:
+                notes_parts.append("Fat elevated - check food sources")
+
+            data["nutrition"]["notes"] = ". ".join(notes_parts)
+
+            save_week_data(data, week_start)
+
+            # Show summary
+            console.print("\n[bold green]MacroFactor data imported successfully![/bold green]")
+
+            table = Table(title=f"Nutrition Data - Week of {week_start}")
+            table.add_column("Day", style="cyan")
+            table.add_column("Calories")
+            table.add_column("Protein")
+            table.add_column("Carbs")
+            table.add_column("Fat")
+
+            for d in daily_data:
+                cal_style = "green" if abs(d["calories"] - targets["calories"]) < 200 else "yellow"
+                prot_style = "green" if d["protein"] >= targets["protein"] * 0.9 else "yellow"
+                table.add_row(
+                    d["day"],
+                    f"[{cal_style}]{d['calories']}[/{cal_style}]",
+                    f"[{prot_style}]{d['protein']}g[/{prot_style}]",
+                    f"{d['carbs']}g",
+                    f"{d['fat']}g"
+                )
+
+            # Add averages row
+            table.add_row(
+                "[bold]AVG[/bold]",
+                f"[bold]{averages['calories']}[/bold]",
+                f"[bold]{averages['protein']}g[/bold]",
+                f"[bold]{averages['carbs']}g[/bold]",
+                f"[bold]{averages['fat']}g[/bold]"
+            )
+
+            console.print(table)
+            console.print(f"\n[dim]Notes: {data['nutrition']['notes']}[/dim]")
+
+    except Exception as e:
+        console.print(f"[red]Error accessing Gmail: {e}[/red]")
+        import traceback
+        traceback.print_exc()
+
+
+def cmd_macrofactor_file(file_path: str = None):
+    """Import MacroFactor data from a local XLSX file."""
+    console.print(Panel.fit(
+        "[bold cyan]MacroFactor File Import[/bold cyan]\n"
+        "Import from a local MacroFactor XLSX export",
+        border_style="cyan"
+    ))
+
+    if not file_path:
+        file_path = Prompt.ask("Path to MacroFactor XLSX file")
+
+    xlsx_path = Path(file_path).expanduser()
+    if not xlsx_path.exists():
+        console.print(f"[red]File not found: {xlsx_path}[/red]")
+        return
+
+    week_start = Prompt.ask("Week start date (YYYY-MM-DD)", default=get_current_week_start())
+
+    daily_data, averages = parse_macrofactor_xlsx(xlsx_path, week_start)
+
+    if not daily_data:
+        return
+
+    # Load and update week data
+    data = load_week_data(week_start)
+    data["nutrition"]["daily"] = daily_data
+    data["nutrition"]["averages"] = averages
+
+    # Generate notes
+    targets = data["nutrition"]["targets"]
+    cal_pct = round(averages["calories"] / targets["calories"] * 100) if targets["calories"] else 100
+    prot_pct = round(averages["protein"] / targets["protein"] * 100) if targets["protein"] else 100
+
+    data["nutrition"]["notes"] = f"{cal_pct}% of calorie target. Protein at {prot_pct}%."
+
+    save_week_data(data, week_start)
+
+    console.print(f"\n[bold green]Imported {len(daily_data)} days of nutrition data![/bold green]")
+
+
+# ============================================================================
+# NUTRITION DATA IMPORT (MANUAL)
+# ============================================================================
+
+def cmd_nutrition():
+    """Import nutrition data manually."""
+    console.print(Panel.fit(
+        "[bold cyan]Nutrition Data Import[/bold cyan]\n"
+        "Enter daily calories and macros",
+        border_style="cyan"
+    ))
+
+    week_start = Prompt.ask("Week start date", default=get_current_week_start())
+    data = load_week_data(week_start)
+
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    daily_data = []
+
+    console.print("\n[bold]Enter nutrition for each day[/bold]")
+    console.print("[dim]Press Enter to skip a day, or enter 'done' to finish early[/dim]\n")
+
+    for day in days:
+        console.print(f"[cyan]{day}[/cyan]")
+        calories = Prompt.ask("  Calories", default="")
+
+        if calories.lower() == "done":
+            break
+        if not calories:
+            continue
+
+        daily_data.append({
+            "day": day,
+            "calories": int(calories),
+            "protein": IntPrompt.ask("  Protein (g)", default=150),
+            "carbs": IntPrompt.ask("  Carbs (g)", default=200),
+            "fat": IntPrompt.ask("  Fat (g)", default=80)
+        })
+
+    if daily_data:
+        data["nutrition"]["daily"] = daily_data
+
+        # Calculate averages
+        data["nutrition"]["averages"] = {
+            "calories": round(sum(d["calories"] for d in daily_data) / len(daily_data)),
+            "protein": round(sum(d["protein"] for d in daily_data) / len(daily_data)),
+            "carbs": round(sum(d["carbs"] for d in daily_data) / len(daily_data)),
+            "fat": round(sum(d["fat"] for d in daily_data) / len(daily_data))
+        }
+
+        # Generate notes based on targets
+        targets = data["nutrition"]["targets"]
+        avg = data["nutrition"]["averages"]
+
+        notes_parts = []
+        cal_pct = round(avg["calories"] / targets["calories"] * 100)
+        prot_pct = round(avg["protein"] / targets["protein"] * 100)
+
+        notes_parts.append(f"{cal_pct}% of calorie target")
+        notes_parts.append(f"Protein at {prot_pct}% of target")
+
+        if avg["fat"] > targets["fat"] * 1.2:
+            notes_parts.append("Fat elevated - check food sources")
+
+        data["nutrition"]["notes"] = ". ".join(notes_parts)
+
+        save_week_data(data, week_start)
+
+
+# ============================================================================
+# COACH SESSION PREP
+# ============================================================================
+
+def cmd_prep():
+    """Generate a coaching session prep summary."""
+    console.print(Panel.fit(
+        "[bold cyan]Coach Session Prep[/bold cyan]\n"
+        "Summary for your next coaching call",
+        border_style="cyan"
+    ))
+
+    week_start = Prompt.ask("Week to prepare", default=get_current_week_start())
+    data = load_week_data(week_start)
+
+    console.print("\n" + "=" * 60)
+    console.print("[bold cyan]COACH SESSION PREP[/bold cyan]")
+    console.print(f"Week of: {data['weekOf']}")
+    console.print("=" * 60)
+
+    # Quick Stats
+    console.print("\n[bold]QUICK STATS[/bold]")
+    table = Table()
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value")
+    table.add_column("Status")
+
+    # Recovery
+    if data["whoop"]["averages"]["recovery"]:
+        recovery = data["whoop"]["averages"]["recovery"]
+        status = "[green]Good[/green]" if recovery >= 70 else ("[yellow]Moderate[/yellow]" if recovery >= 50 else "[red]Low[/red]")
+        table.add_row("Recovery", f"{recovery}%", status)
+
+    # Sleep
+    if data["whoop"]["averages"]["sleep"]:
+        sleep = data["whoop"]["averages"]["sleep"]
+        status = "[green]Good[/green]" if sleep >= 7 else ("[yellow]Low[/yellow]" if sleep >= 6 else "[red]Deficit[/red]")
+        table.add_row("Avg Sleep", f"{sleep}h", status)
+
+    # Calories
+    if data["nutrition"]["averages"]["calories"]:
+        cal = data["nutrition"]["averages"]["calories"]
+        target = data["nutrition"]["targets"]["calories"]
+        pct = round(cal / target * 100)
+        status = "[green]On target[/green]" if 90 <= pct <= 110 else ("[yellow]Off target[/yellow]")
+        table.add_row("Avg Calories", f"{cal} ({pct}%)", status)
+
+    # Weight change (if previous week exists)
+    if data["measurements"]["weight"]:
+        table.add_row("Weight", f"{data['measurements']['weight']} kg", "")
+
+    console.print(table)
+
+    # Mood/Energy Trends
+    if data.get("daily_checkins"):
+        console.print("\n[bold]MOOD & ENERGY TRENDS[/bold]")
+        checkins = data["daily_checkins"]
+        moods = [c["mood"] for c in checkins if c.get("mood")]
+        energies = [c["energy"] for c in checkins if c.get("energy")]
+
+        if moods:
+            avg_mood = sum(moods) / len(moods)
+            trend = data["velocity"].get("mood_trend", "stable")
+            console.print(f"  Mood: {avg_mood:.1f}/5 avg ({trend})")
+        if energies:
+            avg_energy = sum(energies) / len(energies)
+            trend = data["velocity"].get("energy_trend", "stable")
+            console.print(f"  Energy: {avg_energy:.1f}/5 avg ({trend})")
+
+    # Top Blockers
+    if data.get("blockers"):
+        console.print("\n[bold]TOP BLOCKERS[/bold]")
+        for b in data["blockers"][:3]:
+            console.print(f"  - {b['blocker']}: {b['count']}x this week")
+
+    # Wins
+    if data.get("wins"):
+        console.print("\n[bold]WINS TO CELEBRATE[/bold]")
+        for win in data["wins"][:5]:
+            console.print(f"  [green]+[/green] {win}")
+
+    # Questions
+    if data.get("coach_questions"):
+        console.print("\n[bold]CLIENT QUESTIONS[/bold]")
+        console.print(f"  {data['coach_questions']}")
+
+    # Suggested Topics
+    console.print("\n[bold]SUGGESTED DISCUSSION TOPICS[/bold]")
+    topics = []
+
+    if data["whoop"]["averages"].get("recovery", 100) < 50:
+        topics.append("Recovery strategies - current recovery is low")
+
+    if data["whoop"]["averages"].get("sleep", 8) < 6.5:
+        topics.append("Sleep optimization - significant deficit")
+
+    if data.get("blockers"):
+        top_blocker = data["blockers"][0]["blocker"]
+        topics.append(f"Address '{top_blocker}' - most frequent blocker")
+
+    if data["nutrition"]["averages"].get("protein", 0) < data["nutrition"]["targets"]["protein"] * 0.8:
+        topics.append("Protein strategies - below 80% of target")
+
+    if not topics:
+        topics.append("General progress review - on track!")
+
+    for topic in topics:
+        console.print(f"  [yellow]*[/yellow] {topic}")
+
+    console.print("\n" + "=" * 60)
+
+    # Update prep in data
+    data["coach_prep"]["suggested_topics"] = topics
+    save_week_data(data, week_start)
+
+
+# ============================================================================
+# STATUS & EXPORT
+# ============================================================================
+
+def cmd_status():
+    """Show current week's data entry status."""
+    week_start = get_current_week_start()
+    data = load_week_data(week_start)
+
+    console.print(Panel.fit(
+        f"[bold cyan]Week of {week_start}[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    table = Table(title="Data Entry Status")
+    table.add_column("Section", style="cyan")
+    table.add_column("Status")
+    table.add_column("Details")
+
+    # Measurements
+    has_measurements = data["measurements"]["weight"] is not None
+    table.add_row(
+        "Measurements",
+        "[green]Complete[/green]" if has_measurements else "[red]Missing[/red]",
+        f"Weight: {data['measurements']['weight']}kg" if has_measurements else "Run: coach-ingest weekly"
+    )
+
+    # WHOOP
+    whoop_days = len(data["whoop"]["daily"])
+    table.add_row(
+        "WHOOP Data",
+        "[green]Complete[/green]" if whoop_days >= 5 else f"[yellow]{whoop_days}/7 days[/yellow]",
+        f"Avg Recovery: {data['whoop']['averages']['recovery']}%" if whoop_days else "Run: coach-ingest whoop"
+    )
+
+    # Nutrition
+    nutrition_days = len(data["nutrition"]["daily"])
+    table.add_row(
+        "Nutrition",
+        "[green]Complete[/green]" if nutrition_days >= 5 else f"[yellow]{nutrition_days}/7 days[/yellow]",
+        f"Avg Calories: {data['nutrition']['averages']['calories']}" if nutrition_days else "Run: coach-ingest nutrition"
+    )
+
+    # Daily Check-ins
+    checkin_count = len(data.get("daily_checkins", []))
+    table.add_row(
+        "Daily Check-ins",
+        f"[green]{checkin_count}/7[/green]" if checkin_count >= 5 else f"[yellow]{checkin_count}/7[/yellow]",
+        "Run: coach-ingest checkin"
+    )
+
+    # Wellbeing
+    has_wellbeing = bool(data["wellbeing"]["stress"])
+    table.add_row(
+        "Wellbeing",
+        "[green]Complete[/green]" if has_wellbeing else "[red]Missing[/red]",
+        "In weekly summary"
+    )
+
+    console.print(table)
+
+    # Completeness score
+    score = 0
+    if has_measurements:
+        score += 20
+    if whoop_days >= 5:
+        score += 20
+    if nutrition_days >= 5:
+        score += 20
+    if checkin_count >= 5:
+        score += 20
+    if has_wellbeing:
+        score += 20
+
+    console.print(f"\n[bold]Completeness: {score}%[/bold]")
+
+    if score < 100:
+        console.print("\n[dim]Complete all sections for best coaching insights[/dim]")
+
+
+def cmd_export():
+    """Export current week data to JSON (for dashboard)."""
+    week_start = Prompt.ask("Week to export", default=get_current_week_start())
+    data = load_week_data(week_start)
+
+    output_file = DATA_DIR / f"{week_start}.json"
+    with open(output_file, "w") as f:
+        json.dump(data, f, indent=2)
+
+    console.print(f"[green]Exported to {output_file}[/green]")
+    console.print(f"\n[dim]Copy to dashboard or commit to git:[/dim]")
+    console.print(f"  git add {output_file}")
+    console.print(f"  git commit -m 'Update week data: {week_start}'")
+    console.print(f"  git push")
+
+
+# ============================================================================
+# FAST MODE (CLI Arguments)
+# ============================================================================
+
+def cmd_fast_checkin(args: list):
+    """Fast check-in via command line arguments.
+
+    Usage: coach-ingest fast --mood 4 --energy 3 --workout yes --steps 8000
+    """
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mood", type=int, default=3)
+    parser.add_argument("--energy", type=int, default=3)
+    parser.add_argument("--stress", type=int, default=3)
+    parser.add_argument("--sleep-quality", type=int, default=3)
+    parser.add_argument("--workout", type=str, default="no")
+    parser.add_argument("--nutrition", type=str, default="no")
+    parser.add_argument("--water", type=float, default=2.0)
+    parser.add_argument("--steps", type=int, default=0)
+    parser.add_argument("--blockers", type=str, default="")
+    parser.add_argument("--win", type=str, default="")
+    parser.add_argument("--date", type=str, default=datetime.now().strftime("%Y-%m-%d"))
+
+    parsed = parser.parse_args(args)
+
+    data = load_daily_checkin(parsed.date)
+    data["mood"] = parsed.mood
+    data["energy"] = parsed.energy
+    data["stress"] = parsed.stress
+    data["sleep_quality"] = parsed.sleep_quality
+    data["habits"]["workout_completed"] = parsed.workout.lower() in ["yes", "y", "true", "1"]
+    data["habits"]["nutrition_on_track"] = parsed.nutrition.lower() in ["yes", "y", "true", "1"]
+    data["habits"]["water_intake"] = parsed.water
+    data["habits"]["steps"] = parsed.steps
+
+    if parsed.blockers:
+        data["blockers"] = [b.strip() for b in parsed.blockers.split(",")]
+    if parsed.win:
+        data["wins"] = [parsed.win]
+
+    save_daily_checkin(data, parsed.date)
+    aggregate_to_weekly(parsed.date)
+    console.print("[green]Fast check-in complete![/green]")
+
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
+def show_help():
+    """Show usage help."""
+    console.print(Panel.fit(
+        "[bold cyan]Coach Dashboard Data Ingestor[/bold cyan]\n\n"
+        "Interactive CLI for logging fitness data optimized for coaching insights.\n\n"
+        "[bold]Commands:[/bold]\n"
+        "  checkin          - Daily check-in (mood, energy, habits, blockers)\n"
+        "  weekly           - Weekly summary (measurements, training, wins)\n"
+        "  whoop            - Import WHOOP data manually (HRV, sleep, recovery)\n"
+        "  whoop-url        - Import WHOOP from a download URL\n"
+        "  whoop-gmail      - Auto-import WHOOP from Gmail (needs API setup)\n"
+        "  nutrition        - Import nutrition data manually (calories, macros)\n"
+        "  macrofactor      - Auto-import MacroFactor from Gmail attachment\n"
+        "  macrofactor-file - Import MacroFactor from local XLSX file\n"
+        "  prep             - Generate coach session prep summary\n"
+        "  status           - Show current week progress\n"
+        "  export           - Export week data to JSON\n\n"
+        "[bold]Fast Mode:[/bold]\n"
+        "  fast --mood 4 --energy 3 --workout yes --steps 8000\n\n"
+        "[bold]Data Import Options:[/bold]\n"
+        "  whoop-url <URL>       - Paste WHOOP download link from email\n"
+        "  whoop-gmail           - Auto-fetch WHOOP from Gmail\n"
+        "  macrofactor           - Auto-fetch MacroFactor XLSX from Gmail\n"
+        "  macrofactor-file <F>  - Import from local MacroFactor XLSX file\n\n"
+        "[bold]Week Filtering:[/bold]\n"
+        "  All import commands filter data to the specified week (Mon-Sun).\n"
+        "  Default: current week. You can specify any week start date.\n\n"
+        "[bold]Best Practices:[/bold]\n"
+        "  - Daily check-ins: 60 seconds each morning\n"
+        "  - WHOOP/MacroFactor: Email exports to yourself, then run import\n"
+        "  - Weekly summary: Before coaching call\n"
+        "  - Prep command: Share with coach before sessions",
+        border_style="cyan"
+    ))
+
+
+def main():
+    """Main entry point."""
+    if len(sys.argv) < 2:
+        show_help()
+        return
+
+    command = sys.argv[1].lower()
+
+    commands = {
+        "checkin": cmd_checkin,
+        "check-in": cmd_checkin,
+        "daily": cmd_checkin,
+        "weekly": cmd_weekly,
+        "week": cmd_weekly,
+        "whoop": cmd_whoop,
+        "whoop-gmail": cmd_whoop_gmail,
+        "whoop-auto": cmd_whoop_gmail,
+        "nutrition": cmd_nutrition,
+        "macro": cmd_nutrition,
+        "macros": cmd_nutrition,
+        "macrofactor": cmd_macrofactor_gmail,
+        "macrofactor-gmail": cmd_macrofactor_gmail,
+        "mf": cmd_macrofactor_gmail,
+        "prep": cmd_prep,
+        "session": cmd_prep,
+        "status": cmd_status,
+        "export": cmd_export,
+        "help": show_help,
+        "--help": show_help,
+        "-h": show_help,
+    }
+
+    if command == "fast":
+        cmd_fast_checkin(sys.argv[2:])
+    elif command == "whoop-url":
+        # Handle URL as argument
+        url = sys.argv[2] if len(sys.argv) > 2 else None
+        cmd_whoop_url(url)
+    elif command == "macrofactor-file":
+        # Handle file path as argument
+        file_path = sys.argv[2] if len(sys.argv) > 2 else None
+        cmd_macrofactor_file(file_path)
+    elif command in commands:
+        commands[command]()
+    else:
+        console.print(f"[red]Unknown command: {command}[/red]")
+        show_help()
+
+
+if __name__ == "__main__":
+    main()

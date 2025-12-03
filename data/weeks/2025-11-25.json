@@ -1,0 +1,133 @@
+{
+  "weekOf": "2025-11-25",
+  "measurements": {
+    "weight": null,
+    "waist": null,
+    "chest": null,
+    "middle": null,
+    "butt": null,
+    "leg": null,
+    "steps": 0
+  },
+  "training": {
+    "overall_performance": "",
+    "completed": "",
+    "difficulty": "",
+    "recovery": "",
+    "enjoyment": ""
+  },
+  "nutrition": {
+    "daily": [],
+    "averages": {
+      "calories": 0,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 0
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 314,
+      "fat": 102
+    },
+    "notes": ""
+  },
+  "whoop": {
+    "daily": [
+      {
+        "day": "Sun",
+        "hrv": 60,
+        "rhr": 64,
+        "sleep": 1.4,
+        "strain": 13.8,
+        "recovery": 15
+      },
+      {
+        "day": "Mon",
+        "hrv": 49,
+        "rhr": 71,
+        "sleep": 7.3,
+        "strain": 11.7,
+        "recovery": 87
+      },
+      {
+        "day": "Wed",
+        "hrv": 44,
+        "rhr": 72,
+        "sleep": 7.6,
+        "strain": 13.4,
+        "recovery": 81
+      },
+      {
+        "day": "Wed",
+        "hrv": 47,
+        "rhr": 68,
+        "sleep": 7.4,
+        "strain": 15.0,
+        "recovery": 87
+      },
+      {
+        "day": "Fri",
+        "hrv": 41,
+        "rhr": 66,
+        "sleep": 5.5,
+        "strain": 16.4,
+        "recovery": 67
+      },
+      {
+        "day": "Sat",
+        "hrv": 40,
+        "rhr": 74,
+        "sleep": 8.2,
+        "strain": 0.0,
+        "recovery": 71
+      },
+      {
+        "day": "Sat",
+        "hrv": 28,
+        "rhr": 75,
+        "sleep": 4.5,
+        "strain": 16.2,
+        "recovery": 27
+      }
+    ],
+    "averages": {
+      "hrv": 44,
+      "rhr": 70,
+      "sleep": 6.0,
+      "strain": 12.4,
+      "recovery": 62
+    },
+    "sleep_metrics": {
+      "avg_duration": 0,
+      "avg_efficiency": 90,
+      "avg_need": 585,
+      "avg_debt": 97,
+      "consistency": 0
+    },
+    "interpretation": "Moderate recovery (62%). Sleep deficit (averaging 6.0h)"
+  },
+  "wellbeing": {
+    "pain": "",
+    "appetite": "",
+    "cravings": "",
+    "stress": "",
+    "mood": "",
+    "recovery_outside_gym": "",
+    "lifestyle_factors": ""
+  },
+  "wins": [],
+  "coach_questions": "",
+  "daily_checkins": [],
+  "blockers": [],
+  "velocity": {
+    "adherence_change": 0,
+    "mood_trend": "stable",
+    "energy_trend": "stable"
+  },
+  "coach_prep": {
+    "last_session_notes": "",
+    "focus_areas": [],
+    "suggested_topics": []
+  }
+}

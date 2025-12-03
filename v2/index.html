@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Coach Dashboard</title>
+  <script>
+    // Auth check - redirect to login if not authenticated
+    (function() {
+      const session = localStorage.getItem('coachDashboardSession');
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.expiry < Date.now()) {
+          localStorage.removeItem('coachDashboardSession');
+          window.location.href = 'login.html';
+        }
+      } catch (e) {
+        localStorage.removeItem('coachDashboardSession');
+        window.location.href = 'login.html';
+      }
+    })();
+  </script>
+  <style>
+    /* CSS Variables and Base Styles */
+    :root {
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --orange: #f97316;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      line-height: 1.5;
+      padding: 1rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    header .week-date {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-top: 0.25rem;
+    }
+
+    /* Header Actions */
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-secondary {
+      background: var(--gray-200);
+      color: var(--gray-800);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Week Tabs */
+    .week-tabs {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      padding: 0 1rem;
+    }
+
+    .week-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: 1px solid var(--gray-200);
+      background: white;
+      color: var(--gray-600);
+      transition: all 0.2s;
+    }
+
+    .week-tab:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .week-tab.active {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+
+    /* CSV Helper Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray-600);
+    }
+
+    .csv-textarea {
+      width: 100%;
+      height: 150px;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.875rem;
+      resize: vertical;
+      margin-bottom: 1rem;
+    }
+
+    .csv-output {
+      background: var(--gray-100);
+      padding: 1rem;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .csv-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .csv-tab {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: var(--gray-100);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .csv-tab.active {
+      background: var(--blue);
+      color: white;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+    }
+
+    .card h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .chart-explainer {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
+    /* Chart Container */
+    .chart-wrap {
+      position: relative;
+      aspect-ratio: 16/10;
+    }
+
+    .chart-wrap.square {
+      aspect-ratio: 1/1;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .chart-wrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Recovery Score Card */
+    .recovery-card {
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .recovery-score {
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .recovery-score.green { color: var(--green); }
+    .recovery-score.yellow { color: var(--yellow); }
+    .recovery-score.red { color: var(--red); }
+    .recovery-score.blue { color: var(--blue); }
+    .recovery-score.purple { color: var(--purple); }
+
+    /* Insight Card */
+    .insight-card {
+      background: linear-gradient(135deg, var(--gray-800) 0%, #374151 100%);
+      color: white;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .insight-card p {
+      font-size: 1.125rem;
+      font-weight: 500;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .recovery-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-top: 0.5rem;
+    }
+
+    /* Measurements Table */
+    .measurements-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .measurements-table tr {
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .measurements-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .measurements-table td {
+      padding: 0.5rem 0;
+    }
+
+    .measurements-table td:first-child {
+      color: var(--gray-600);
+    }
+
+    .measurements-table td:last-child {
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .measurements-table .highlight {
+      font-weight: 600;
+      color: var(--blue);
+    }
+
+    /* Notes Sections */
+    .notes-section {
+      font-size: 0.875rem;
+    }
+
+    .notes-section .note-item {
+      margin-bottom: 0.75rem;
+    }
+
+    .notes-section .note-label {
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .notes-section .note-value {
+      color: var(--gray-600);
+    }
+
+    /* Comparison Grid */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .comparison-grid .label {
+      color: var(--gray-600);
+    }
+
+    .comparison-grid .value {
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .comparison-grid .target {
+      color: var(--gray-600);
+      font-weight: 400;
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+        padding: 0;
+      }
+
+      .no-print, .header-actions, .week-tabs, .modal-overlay {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100%;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+      }
+
+      .chart-wrap {
+        max-height: 200px;
+      }
+
+      .chart-wrap canvas {
+        max-width: 280px !important;
+        max-height: 180px !important;
+      }
+
+      .section-title {
+        page-break-before: auto;
+        margin-top: 1rem;
+      }
+
+      .print-footer {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 10pt;
+        color: #666;
+        padding: 0.5rem;
+        border-top: 1px solid #ddd;
+      }
+    }
+
+    .print-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- CSV Helper Modal -->
+  <div class="modal-overlay" id="csvModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeCsvModal()">&times;</button>
+      <h3>CSV Import Helper</h3>
+      <p style="color: var(--gray-600); margin-bottom: 1rem; font-size: 0.875rem;">
+        Paste your WHOOP or MacroFactor CSV export below. The tool will parse it and generate JSON for your weekly data.
+      </p>
+      <div class="csv-tabs">
+        <button class="csv-tab active" onclick="setCsvType('whoop')">WHOOP</button>
+        <button class="csv-tab" onclick="setCsvType('macrofactor')">MacroFactor</button>
+      </div>
+      <textarea class="csv-textarea" id="csvInput" placeholder="Paste CSV data here..."></textarea>
+      <button class="btn btn-primary" onclick="parseCSV()" style="width: 100%; margin-bottom: 1rem;">
+        Parse CSV
+      </button>
+      <div class="csv-output" id="csvOutput">Parsed JSON will appear here...</div>
+      <button class="btn btn-secondary" onclick="copyOutput()" style="width: 100%; margin-top: 0.5rem;">
+        Copy to Clipboard
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Weekly Coach Dashboard</h1>
+      <p class="week-date" id="weekDate"></p>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="exportPDF()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          Download PDF
+        </button>
+        <button class="btn btn-secondary" onclick="openCsvModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          Import CSV
+        </button>
+        <a href="admin.html" class="btn btn-secondary" id="adminLink" style="display:none;">Admin</a>
+        <button class="btn btn-secondary" onclick="logout()" style="background: #ef4444; color: white;">Logout</button>
+      </div>
+    </header>
+
+    <!-- Week Tabs -->
+    <div class="week-tabs" id="weekTabs">
+      <!-- Populated by JavaScript -->
+    </div>
+
+    <!-- AI Insight -->
+    <div class="card insight-card" id="insightCard">
+      <p id="aiInsight">Loading insight...</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid" id="summaryGrid">
+      <div class="card recovery-card">
+        <h2>Recovery Score</h2>
+        <div class="recovery-score" id="recoveryScore">--</div>
+        <p class="recovery-label" id="recoveryLabel">Loading...</p>
+      </div>
+
+      <div class="card recovery-card">
+        <h2>Daily Calories</h2>
+        <div class="recovery-score blue" id="avgCalories">--</div>
+        <p class="recovery-label">avg per day</p>
+      </div>
+
+      <div class="card recovery-card">
+        <h2>Daily Steps</h2>
+        <div class="recovery-score purple" id="avgSteps">--</div>
+        <p class="recovery-label">avg per day</p>
+      </div>
+
+      <div class="card">
+        <h2>Measurements</h2>
+        <table class="measurements-table" id="measurementsTable">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Weekly Averages</h2>
+        <div class="comparison-grid" id="averagesGrid"></div>
+      </div>
+    </div>
+
+    <!-- WHOOP Charts Section -->
+    <h3 class="section-title">WHOOP Recovery Metrics</h3>
+    <div class="grid">
+      <div class="card">
+        <h2>HRV (Heart Rate Variability)</h2>
+        <p class="chart-explainer">Higher = better recovery. Measures nervous system readiness. Gray band shows your baseline range.</p>
+        <div class="chart-wrap">
+          <canvas id="hrvChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Resting Heart Rate</h2>
+        <p class="chart-explainer">Lower = better recovery. Elevated RHR can signal stress, poor sleep, or overtraining.</p>
+        <div class="chart-wrap">
+          <canvas id="rhrChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Sleep Duration</h2>
+        <p class="chart-explainer">Aim for 7-9 hours. Sleep is when your body repairs muscle and consolidates training gains.</p>
+        <div class="chart-wrap">
+          <canvas id="sleepChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Strain</h2>
+        <p class="chart-explainer">Daily cardiovascular load (0-21 scale). Balance strain with recovery for optimal progress.</p>
+        <div class="chart-wrap">
+          <canvas id="strainChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nutrition Charts Section -->
+    <h3 class="section-title">Nutrition (MacroFactor)</h3>
+    <div class="grid">
+      <div class="card">
+        <h2>Daily Calories</h2>
+        <p class="chart-explainer">Track intake vs target. Consistent adherence drives body composition changes over time.</p>
+        <div class="chart-wrap">
+          <canvas id="caloriesChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Macro Distribution</h2>
+        <p class="chart-explainer">Protein for muscle, carbs for energy, fats for hormones. Balance matters for performance.</p>
+        <div class="chart-wrap square">
+          <canvas id="macrosChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Nutrition Notes</h2>
+        <div class="notes-section" id="nutritionNotes"></div>
+      </div>
+    </div>
+
+    <!-- Training Section -->
+    <h3 class="section-title">Training Summary</h3>
+    <div class="grid">
+      <div class="card">
+        <h2>Training Notes</h2>
+        <div class="notes-section" id="trainingNotes"></div>
+      </div>
+
+      <div class="card">
+        <h2>WHOOP Interpretation</h2>
+        <div class="notes-section" id="whoopNotes"></div>
+      </div>
+    </div>
+
+    <!-- Health & Well-Being Section -->
+    <h3 class="section-title">Health & Well-Being</h3>
+    <div class="grid">
+      <div class="card">
+        <h2>This Week</h2>
+        <div class="notes-section" id="wellbeingNotes"></div>
+      </div>
+
+      <div class="card">
+        <h2>Wins & Achievements</h2>
+        <div class="notes-section" id="winsNotes"></div>
+      </div>
+
+      <div class="card">
+        <h2>Questions for Coach</h2>
+        <div class="notes-section" id="coachQuestions"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="print-footer">
+    <span id="printWeek"></span> | Generated: <span id="printDate"></span>
+  </div>
+
+  <!-- Embedded JSON Data -->
+  <script type="application/json" id="dashboardData">
+{
+  "weekOf": "2025-11-16",
+  "measurements": {
+    "weight": 116,
+    "waist": 86,
+    "chest": 120,
+    "middle": 102,
+    "butt": 110,
+    "leg": 68,
+    "steps": 56042
+  },
+  "training": {
+    "overall_performance": "Good energy, strong sessions",
+    "completed": "3 workouts (skipped full body)",
+    "difficulty": "Squats tight, rest good",
+    "recovery": "Good but sore",
+    "enjoyment": "Loved the training"
+  },
+  "nutrition": {
+    "daily": [
+      { "day": "Mon", "calories": 3200, "protein": 165, "carbs": 340, "fat": 180 },
+      { "day": "Tue", "calories": 3500, "protein": 175, "carbs": 370, "fat": 195 },
+      { "day": "Wed", "calories": 3400, "protein": 170, "carbs": 355, "fat": 188 },
+      { "day": "Thu", "calories": 3600, "protein": 180, "carbs": 380, "fat": 200 },
+      { "day": "Fri", "calories": 3300, "protein": 168, "carbs": 345, "fat": 182 },
+      { "day": "Sat", "calories": 3550, "protein": 175, "carbs": 375, "fat": 195 },
+      { "day": "Sun", "calories": 3580, "protein": 171, "carbs": 355, "fat": 190 }
+    ],
+    "averages": {
+      "calories": 3447,
+      "protein": 172,
+      "carbs": 360,
+      "fat": 190
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 314,
+      "fat": 102
+    },
+    "notes": "126% of calorie target due to travel + takeaway. Protein improving (88% of target). Fat elevated from convenience foods. Hydration low. Focus: meal prep, protein-first, 3L+ water daily."
+  },
+  "whoop": {
+    "daily": [
+      { "day": "Mon", "hrv": 45, "rhr": 74, "sleep": 5.5, "strain": 12.0, "recovery": 52 },
+      { "day": "Tue", "hrv": 48, "rhr": 72, "sleep": 6.2, "strain": 14.5, "recovery": 58 },
+      { "day": "Wed", "hrv": 42, "rhr": 75, "sleep": 5.0, "strain": 10.2, "recovery": 48 },
+      { "day": "Thu", "hrv": 50, "rhr": 71, "sleep": 6.8, "strain": 13.8, "recovery": 62 },
+      { "day": "Fri", "hrv": 47, "rhr": 73, "sleep": 5.8, "strain": 11.5, "recovery": 55 },
+      { "day": "Sat", "hrv": 49, "rhr": 72, "sleep": 5.3, "strain": 9.8, "recovery": 60 },
+      { "day": "Sun", "hrv": 48, "rhr": 73, "sleep": 5.5, "strain": 9.4, "recovery": 64 }
+    ],
+    "averages": {
+      "hrv": 47,
+      "rhr": 73,
+      "sleep": 5.7,
+      "strain": 11.6,
+      "recovery": 57
+    },
+    "sleep_metrics": {
+      "avg_duration": 5.7,
+      "avg_efficiency": 97,
+      "avg_need": 8.9,
+      "avg_debt": 58,
+      "consistency": 51
+    },
+    "interpretation": "Moderate recovery (57%) with high strain and significant sleep deficit. Averaging 5.7h vs 8.9h need. RHR elevated at 73 bpm. Routine disruption affecting sleep consistency (51%). Priority: improve sleep duration to support recovery."
+  },
+  "wellbeing": {
+    "pain": "Minor soreness - normal training soreness",
+    "appetite": "Good - normal appetite, no issues",
+    "cravings": "Some cravings for sugar/junk",
+    "stress": "Very high - travel, social events, work pressure",
+    "mood": "Anxious/stressed - mind racing",
+    "recovery_outside_gym": "Good - did recovery work",
+    "lifestyle_factors": "Travel, social events, work stress all impacting routine"
+  },
+  "wins": [
+    "Consistency win - stuck to plan despite challenges",
+    "Mindset win - mental breakthrough",
+    "Got more protein!",
+    "Worked super hard and smashed legs"
+  ],
+  "coach_questions": "What should I be doing when I get cravings? I find if I fast in the morning it helps me not overeat."
+}
+  </script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+  <script>
+    // ===== WEEK MANAGEMENT =====
+    // Available weeks (add new weeks here as files are created in data/weeks/)
+    const availableWeeks = ['2025-11-16'];
+    let currentWeekIndex = 0;
+    let chartInstances = {};
+
+    // Load embedded JSON data (fallback/default)
+    let data = JSON.parse(document.getElementById('dashboardData').textContent);
+    let days = data.whoop.daily.map(d => d.day);
+
+    // ===== PDF EXPORT =====
+    function exportPDF() {
+      // Use browser's native print which has excellent PDF support
+      window.print();
+    }
+
+    // ===== CSV HELPER =====
+    let csvType = 'whoop';
+
+    function openCsvModal() {
+      document.getElementById('csvModal').classList.add('active');
+    }
+
+    function closeCsvModal() {
+      document.getElementById('csvModal').classList.remove('active');
+    }
+
+    function setCsvType(type) {
+      csvType = type;
+      document.querySelectorAll('.csv-tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('csvInput').placeholder = type === 'whoop'
+        ? 'Paste WHOOP CSV (columns: date, hrv, rhr, sleep_hours, strain, recovery)...'
+        : 'Paste MacroFactor CSV (columns: date, calories, protein, carbs, fat)...';
+    }
+
+    function parseCSV() {
+      const input = document.getElementById('csvInput').value.trim();
+      const output = document.getElementById('csvOutput');
+
+      if (!input) {
+        output.textContent = 'Please paste CSV data first.';
+        return;
+      }
+
+      try {
+        const lines = input.split('\n').filter(l => l.trim());
+        const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+        const dataRows = lines.slice(1);
+
+        if (csvType === 'whoop') {
+          const whoopData = dataRows.map(row => {
+            const cols = row.split(',').map(c => c.trim());
+            const dayName = new Date(cols[0]).toLocaleDateString('en-US', { weekday: 'short' });
+            return {
+              day: dayName,
+              hrv: parseFloat(cols[headers.indexOf('hrv')] || cols[1]) || 0,
+              rhr: parseFloat(cols[headers.indexOf('rhr')] || cols[2]) || 0,
+              sleep: parseFloat(cols[headers.indexOf('sleep_hours') || headers.indexOf('sleep')] || cols[3]) || 0,
+              strain: parseFloat(cols[headers.indexOf('strain')] || cols[4]) || 0,
+              recovery: parseFloat(cols[headers.indexOf('recovery')] || cols[5]) || 0
+            };
+          }).slice(0, 7);
+
+          const avgHrv = Math.round(whoopData.reduce((s, d) => s + d.hrv, 0) / whoopData.length);
+          const avgRhr = Math.round(whoopData.reduce((s, d) => s + d.rhr, 0) / whoopData.length);
+          const avgSleep = (whoopData.reduce((s, d) => s + d.sleep, 0) / whoopData.length).toFixed(1);
+          const avgStrain = (whoopData.reduce((s, d) => s + d.strain, 0) / whoopData.length).toFixed(1);
+          const avgRecovery = Math.round(whoopData.reduce((s, d) => s + d.recovery, 0) / whoopData.length);
+
+          output.textContent = JSON.stringify({
+            whoop: {
+              daily: whoopData,
+              averages: { hrv: avgHrv, rhr: avgRhr, sleep: parseFloat(avgSleep), strain: parseFloat(avgStrain), recovery: avgRecovery }
+            }
+          }, null, 2);
+        } else {
+          const nutritionData = dataRows.map(row => {
+            const cols = row.split(',').map(c => c.trim());
+            const dayName = new Date(cols[0]).toLocaleDateString('en-US', { weekday: 'short' });
+            return {
+              day: dayName,
+              calories: parseInt(cols[headers.indexOf('calories')] || cols[1]) || 0,
+              protein: parseInt(cols[headers.indexOf('protein')] || cols[2]) || 0,
+              carbs: parseInt(cols[headers.indexOf('carbs')] || cols[3]) || 0,
+              fat: parseInt(cols[headers.indexOf('fat')] || cols[4]) || 0
+            };
+          }).slice(0, 7);
+
+          const avgCals = Math.round(nutritionData.reduce((s, d) => s + d.calories, 0) / nutritionData.length);
+          const avgProtein = Math.round(nutritionData.reduce((s, d) => s + d.protein, 0) / nutritionData.length);
+          const avgCarbs = Math.round(nutritionData.reduce((s, d) => s + d.carbs, 0) / nutritionData.length);
+          const avgFat = Math.round(nutritionData.reduce((s, d) => s + d.fat, 0) / nutritionData.length);
+
+          output.textContent = JSON.stringify({
+            nutrition: {
+              daily: nutritionData,
+              averages: { calories: avgCals, protein: avgProtein, carbs: avgCarbs, fat: avgFat }
+            }
+          }, null, 2);
+        }
+      } catch (e) {
+        output.textContent = 'Error parsing CSV: ' + e.message;
+      }
+    }
+
+    function copyOutput() {
+      const output = document.getElementById('csvOutput').textContent;
+      navigator.clipboard.writeText(output).then(() => {
+        alert('Copied to clipboard!');
+      });
+    }
+
+    // Close modal on overlay click
+    document.getElementById('csvModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        closeCsvModal();
+      }
+    });
+
+    // ===== WEEK TABS =====
+    function renderWeekTabs() {
+      const tabsContainer = document.getElementById('weekTabs');
+      tabsContainer.innerHTML = '';
+
+      availableWeeks.forEach((weekDate, index) => {
+        const date = new Date(weekDate);
+        const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const tab = document.createElement('button');
+        tab.className = 'week-tab' + (index === currentWeekIndex ? ' active' : '');
+        tab.textContent = 'Week of ' + label;
+        tab.onclick = () => loadWeek(index);
+        tabsContainer.appendChild(tab);
+      });
+    }
+
+    async function loadWeek(index) {
+      if (index === currentWeekIndex && index === 0) return; // Already loaded from embedded data
+
+      currentWeekIndex = index;
+      const weekDate = availableWeeks[index];
+
+      try {
+        // Try to load from data/weeks/ directory
+        const response = await fetch(`data/weeks/${weekDate}.json`);
+        if (response.ok) {
+          data = await response.json();
+          days = data.whoop.daily.map(d => d.day);
+          renderDashboard();
+          renderWeekTabs();
+        }
+      } catch (e) {
+        console.log('Using embedded data for week', weekDate);
+      }
+    }
+
+    // ===== DASHBOARD RENDERING =====
+    function renderDashboard() {
+      // Destroy existing charts
+      Object.values(chartInstances).forEach(chart => chart.destroy());
+      chartInstances = {};
+
+      // Clear dynamic content
+      document.querySelector('#measurementsTable tbody').innerHTML = '';
+      document.getElementById('averagesGrid').innerHTML = '';
+      document.getElementById('trainingNotes').innerHTML = '';
+      document.getElementById('nutritionNotes').innerHTML = '';
+      document.getElementById('whoopNotes').innerHTML = '';
+      document.getElementById('wellbeingNotes').innerHTML = '';
+      document.getElementById('winsNotes').innerHTML = '';
+      document.getElementById('coachQuestions').innerHTML = '';
+
+      // Reset recovery score classes
+      const recoveryEl = document.getElementById('recoveryScore');
+      recoveryEl.classList.remove('green', 'yellow', 'red');
+
+      // Update header
+    const weekDate = new Date(data.weekOf);
+    const endDate = new Date(weekDate);
+    endDate.setDate(endDate.getDate() + 6);
+    const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    document.getElementById('weekDate').textContent = `Week of ${formatDate(weekDate)} - ${formatDate(endDate)}, ${weekDate.getFullYear()}`;
+
+    // Print footer
+    document.getElementById('printWeek').textContent = `Week of ${formatDate(weekDate)}`;
+    document.getElementById('printDate').textContent = new Date().toLocaleDateString();
+
+    // Recovery Score Card
+    const avgRecovery = data.whoop.averages.recovery;
+    recoveryEl.textContent = avgRecovery;
+    if (avgRecovery >= 70) {
+      recoveryEl.classList.add('green');
+      document.getElementById('recoveryLabel').textContent = 'Peak Performance Ready';
+    } else if (avgRecovery >= 50) {
+      recoveryEl.classList.add('yellow');
+      document.getElementById('recoveryLabel').textContent = 'Moderate - Train Smart';
+    } else {
+      recoveryEl.classList.add('red');
+      document.getElementById('recoveryLabel').textContent = 'Recovery Focus Needed';
+    }
+
+    // Avg Calories Card
+    document.getElementById('avgCalories').textContent = data.nutrition.averages.calories.toLocaleString();
+
+    // Avg Steps Card (daily average from weekly total)
+    const avgSteps = Math.round(data.measurements.steps / 7);
+    document.getElementById('avgSteps').textContent = avgSteps.toLocaleString();
+
+    // AI Insight - Generate based on data
+    function generateInsight() {
+      const insights = [];
+
+      // Recovery trend
+      if (avgRecovery >= 70) {
+        insights.push('Strong recovery this week.');
+      } else if (avgRecovery >= 50) {
+        insights.push('Moderate recovery - monitor fatigue.');
+      } else {
+        insights.push('Recovery needs attention.');
+      }
+
+      // Sleep assessment
+      const avgSleep = data.whoop.averages.sleep;
+      if (avgSleep < 7) {
+        insights.push(`Sleep averaging ${avgSleep}h (need 8h).`);
+      }
+
+      // Nutrition adherence
+      const calPercent = ((data.nutrition.averages.calories / data.nutrition.targets.calories) * 100).toFixed(0);
+      const calDiff = data.nutrition.averages.calories - data.nutrition.targets.calories;
+      if (calPercent > 115) {
+        insights.push(`Calories at ${calPercent}% of target (+${calDiff}).`);
+      } else if (calPercent < 90) {
+        insights.push(`Calories at ${calPercent}% of target (${calDiff}).`);
+      } else {
+        insights.push(`Calories on track at ${calPercent}%.`);
+      }
+
+      // Protein check
+      const proteinPercent = ((data.nutrition.averages.protein / data.nutrition.targets.protein) * 100).toFixed(0);
+      if (proteinPercent < 90) {
+        insights.push(`Protein at ${proteinPercent}% - prioritise protein-first meals.`);
+      }
+
+      // Fat check (if way over)
+      const fatPercent = ((data.nutrition.averages.fat / data.nutrition.targets.fat) * 100).toFixed(0);
+      if (fatPercent > 150) {
+        insights.push(`Fat elevated (${fatPercent}%) - likely takeaway/convenience foods.`);
+      }
+
+      return insights.join(' ');
+    }
+
+    document.getElementById('aiInsight').textContent = generateInsight();
+
+    // Measurements Table
+    const measurementsData = [
+      { label: 'Weight', value: `${data.measurements.weight} kg`, highlight: true },
+      { label: 'Waist', value: `${data.measurements.waist} cm` },
+      { label: 'Chest', value: `${data.measurements.chest} cm` },
+      { label: 'Middle', value: `${data.measurements.middle} cm` },
+      { label: 'Butt', value: `${data.measurements.butt} cm` },
+      { label: 'Leg', value: `${data.measurements.leg} cm` },
+      { label: 'Weekly Steps', value: data.measurements.steps.toLocaleString() }
+    ];
+
+    const tbody = document.querySelector('#measurementsTable tbody');
+    measurementsData.forEach(m => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${m.label}</td><td class="${m.highlight ? 'highlight' : ''}">${m.value}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    // Weekly Averages Grid
+    const averagesGrid = document.getElementById('averagesGrid');
+    const avgItems = [
+      { label: 'Calories', actual: data.nutrition.averages.calories, target: data.nutrition.targets.calories },
+      { label: 'Protein', actual: `${data.nutrition.averages.protein}g`, target: `${data.nutrition.targets.protein}g` },
+      { label: 'Carbs', actual: `${data.nutrition.averages.carbs}g`, target: `${data.nutrition.targets.carbs}g` },
+      { label: 'Fat', actual: `${data.nutrition.averages.fat}g`, target: `${data.nutrition.targets.fat}g` },
+      { label: 'Avg Sleep', actual: `${data.whoop.averages.sleep}h`, target: '8h' },
+      { label: 'Avg HRV', actual: `${data.whoop.averages.hrv}ms`, target: '50ms+' }
+    ];
+
+    avgItems.forEach(item => {
+      averagesGrid.innerHTML += `
+        <div class="label">${item.label}</div>
+        <div class="value">${item.actual} <span class="target">(${item.target})</span></div>
+      `;
+    });
+
+    // Training Notes
+    const trainingNotes = document.getElementById('trainingNotes');
+    const trainingItems = [
+      { label: 'Performance', value: data.training.overall_performance },
+      { label: 'Completed', value: data.training.completed },
+      { label: 'Difficulty', value: data.training.difficulty },
+      { label: 'Recovery', value: data.training.recovery },
+      { label: 'Enjoyment', value: data.training.enjoyment }
+    ];
+    trainingItems.forEach(item => {
+      trainingNotes.innerHTML += `
+        <div class="note-item">
+          <span class="note-label">${item.label}:</span>
+          <span class="note-value">${item.value}</span>
+        </div>
+      `;
+    });
+
+    // Nutrition Notes
+    const nutritionNotes = document.getElementById('nutritionNotes');
+    nutritionNotes.innerHTML = `
+      <div class="note-item">
+        <span class="note-label">Summary:</span>
+        <span class="note-value">${data.nutrition.notes}</span>
+      </div>
+    `;
+
+    // WHOOP Notes
+    const whoopNotes = document.getElementById('whoopNotes');
+    whoopNotes.innerHTML = `
+      <div class="note-item">
+        <span class="note-value">${data.whoop.interpretation}</span>
+      </div>
+    `;
+
+    // Well-being Notes
+    const wellbeingNotes = document.getElementById('wellbeingNotes');
+    const wellbeingItems = [
+      { label: 'Pain/Discomfort', value: data.wellbeing.pain },
+      { label: 'Appetite', value: data.wellbeing.appetite },
+      { label: 'Cravings', value: data.wellbeing.cravings },
+      { label: 'Stress', value: data.wellbeing.stress },
+      { label: 'Mood', value: data.wellbeing.mood },
+      { label: 'Recovery', value: data.wellbeing.recovery_outside_gym },
+      { label: 'Lifestyle', value: data.wellbeing.lifestyle_factors }
+    ];
+    wellbeingItems.forEach(item => {
+      wellbeingNotes.innerHTML += `
+        <div class="note-item">
+          <span class="note-label">${item.label}:</span>
+          <span class="note-value">${item.value}</span>
+        </div>
+      `;
+    });
+
+    // Wins Notes
+    const winsNotes = document.getElementById('winsNotes');
+    data.wins.forEach(win => {
+      winsNotes.innerHTML += `
+        <div class="note-item">
+          <span class="note-value">✓ ${win}</span>
+        </div>
+      `;
+    });
+
+    // Coach Questions
+    const coachQuestions = document.getElementById('coachQuestions');
+    coachQuestions.innerHTML = `
+      <div class="note-item">
+        <span class="note-value">${data.coach_questions}</span>
+      </div>
+    `;
+
+    // Chart defaults
+    Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#4b5563';
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: false,
+          grid: { color: '#e5e7eb' }
+        }
+      }
+    };
+
+    // HRV Chart with baseline band
+    chartInstances.hrv = new Chart(document.getElementById('hrvChart'), {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: 'Baseline Upper',
+            data: Array(7).fill(60),
+            borderColor: 'transparent',
+            backgroundColor: 'rgba(156, 163, 175, 0.2)',
+            fill: '+1',
+            pointRadius: 0
+          },
+          {
+            label: 'Baseline Lower',
+            data: Array(7).fill(40),
+            borderColor: 'transparent',
+            backgroundColor: 'transparent',
+            fill: false,
+            pointRadius: 0
+          },
+          {
+            label: 'HRV',
+            data: data.whoop.daily.map(d => d.hrv),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6'
+          }
+        ]
+      },
+      options: {
+        ...chartOptions,
+        scales: {
+          ...chartOptions.scales,
+          y: { ...chartOptions.scales.y, min: 30, max: 80 }
+        }
+      }
+    });
+
+    // RHR Chart
+    chartInstances.rhr = new Chart(document.getElementById('rhrChart'), {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [{
+          label: 'RHR',
+          data: data.whoop.daily.map(d => d.rhr),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#ef4444'
+        }]
+      },
+      options: {
+        ...chartOptions,
+        scales: {
+          ...chartOptions.scales,
+          y: { ...chartOptions.scales.y, min: 65, max: 80 }
+        }
+      }
+    });
+
+    // Sleep Chart with target line
+    chartInstances.sleep = new Chart(document.getElementById('sleepChart'), {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [{
+          label: 'Sleep (hours)',
+          data: data.whoop.daily.map(d => d.sleep),
+          backgroundColor: '#8b5cf6',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        ...chartOptions,
+        scales: {
+          ...chartOptions.scales,
+          y: { ...chartOptions.scales.y, min: 0, max: 10 }
+        },
+        plugins: {
+          ...chartOptions.plugins,
+          annotation: {
+            annotations: {
+              targetLine: {
+                type: 'line',
+                yMin: 8,
+                yMax: 8,
+                borderColor: '#22c55e',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  display: true,
+                  content: '8h target',
+                  position: 'start',
+                  backgroundColor: 'white',
+                  color: '#22c55e',
+                  font: { size: 10 },
+                  yAdjust: -12
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Strain Chart
+    const totalStrain = data.whoop.daily.reduce((sum, d) => sum + d.strain, 0).toFixed(1);
+    chartInstances.strain = new Chart(document.getElementById('strainChart'), {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [{
+          label: 'Strain',
+          data: data.whoop.daily.map(d => d.strain),
+          backgroundColor: '#f97316',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        ...chartOptions,
+        scales: {
+          ...chartOptions.scales,
+          y: { ...chartOptions.scales.y, min: 0, max: 21 }
+        },
+        plugins: {
+          ...chartOptions.plugins,
+          title: {
+            display: true,
+            text: `Weekly Total: ${totalStrain}`,
+            position: 'bottom',
+            font: { size: 11, weight: 'normal' },
+            color: '#4b5563'
+          }
+        }
+      }
+    });
+
+    // Calories Chart with target line
+    chartInstances.calories = new Chart(document.getElementById('caloriesChart'), {
+      type: 'line',
+      data: {
+        labels: days,
+        datasets: [{
+          label: 'Calories',
+          data: data.nutrition.daily.map(d => d.calories),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#22c55e'
+        }]
+      },
+      options: {
+        ...chartOptions,
+        scales: {
+          ...chartOptions.scales,
+          y: { ...chartOptions.scales.y, min: 2500, max: 3800 }
+        },
+        plugins: {
+          ...chartOptions.plugins,
+          annotation: {
+            annotations: {
+              targetLine: {
+                type: 'line',
+                yMin: data.nutrition.targets.calories,
+                yMax: data.nutrition.targets.calories,
+                borderColor: '#ef4444',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  display: true,
+                  content: `${data.nutrition.targets.calories} target`,
+                  position: 'start',
+                  backgroundColor: 'white',
+                  color: '#ef4444',
+                  font: { size: 10 },
+                  yAdjust: -12
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Macros Doughnut Chart
+    const totalMacros = data.nutrition.averages.protein + data.nutrition.averages.carbs + data.nutrition.averages.fat;
+    chartInstances.macros = new Chart(document.getElementById('macrosChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Protein', 'Carbs', 'Fat'],
+        datasets: [{
+          data: [
+            data.nutrition.averages.protein,
+            data.nutrition.averages.carbs,
+            data.nutrition.averages.fat
+          ],
+          backgroundColor: ['#3b82f6', '#eab308', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              usePointStyle: true,
+              padding: 15
+            }
+          }
+        }
+      },
+      plugins: [{
+        id: 'centerText',
+        beforeDraw: function(chart) {
+          const ctx = chart.ctx;
+          const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+          const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          ctx.font = 'bold 20px system-ui';
+          ctx.fillStyle = '#1f2937';
+          ctx.fillText(`${data.nutrition.averages.calories}`, centerX, centerY - 8);
+
+          ctx.font = '11px system-ui';
+          ctx.fillStyle = '#4b5563';
+          ctx.fillText('avg cal/day', centerX, centerY + 12);
+
+          ctx.restore();
+        }
+      }]
+    });
+    } // End of renderDashboard function
+
+    // ===== AUTH FUNCTIONS =====
+    function logout() {
+      localStorage.removeItem('coachDashboardSession');
+      window.location.href = 'login.html';
+    }
+
+    // Show admin link if user is admin
+    function checkAdminRole() {
+      const session = localStorage.getItem('coachDashboardSession');
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          if (parsed.role === 'admin') {
+            document.getElementById('adminLink').style.display = 'inline-flex';
+          }
+        } catch (e) {}
+      }
+    }
+
+    // ===== INITIALIZATION =====
+    // Check admin role and render dashboard
+    checkAdminRole();
+    renderWeekTabs();
+    renderDashboard();
+  </script>
+</body>
+</html>
