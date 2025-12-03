@@ -1049,79 +1049,267 @@ def extract_gmail_attachment(service, message_id: str, filename_pattern: str, de
         return None
 
 
-def parse_macrofactor_xlsx(xlsx_path: Path, week_start: str) -> tuple[list, dict]:
+
+def parse_macrofactor_xlsx(xlsx_path: Path, week_start: str) -> tuple[list, dict, dict, dict]:
     """Parse MacroFactor XLSX export and filter to relevant week.
 
-    Returns: (daily_data, averages)
+    Reads multiple sheets:
+    - 'Calories & Macros': Daily nutrition data
+    - 'Scale Weight': Weight and body fat percentage
+    - 'Body Metrics': Waist, chest, hips, shoulders, etc.
+    - 'Steps': Daily step counts
+
+    Returns: (daily_data, averages, measurements, data_notes)
+        - daily_data: List of daily nutrition entries
+        - averages: Dict of average macros for the week
+        - measurements: Dict of body measurements (weight, waist, chest, etc.)
+        - data_notes: Dict explaining data sources or why data is missing
     """
     try:
         import pandas as pd
     except ImportError:
         console.print("[red]pandas not available. Install with:[/red]")
         console.print("  pip install pandas openpyxl")
-        return [], {}
+        return [], {}, {}, {"error": "pandas not installed"}
 
-    df = pd.read_excel(xlsx_path)
-
-    # Convert Date column to datetime
-    df['Date'] = pd.to_datetime(df['Date'])
+    # Initialize return values
+    measurements = {
+        "weight": None,
+        "body_fat": None,
+        "waist": None,
+        "chest": None,
+        "hips": None,
+        "shoulders": None,
+        "middle": None,    # Maps to Bust (cm) in MacroFactor
+        "butt": None,      # Maps to Hips (cm) in MacroFactor
+        "leg": None,       # Maps to Right Thigh (cm) in MacroFactor
+    }
+    data_notes = {}
 
     # Calculate week boundaries (Monday to Sunday)
     week_start_dt = datetime.strptime(week_start, '%Y-%m-%d')
     week_end_dt = week_start_dt + timedelta(days=6)
 
-    # Filter to the relevant week
-    mask = (df['Date'] >= week_start_dt) & (df['Date'] <= week_end_dt)
-    week_df = df[mask].copy()
+    # Open workbook to read multiple sheets
+    try:
+        xlsx = pd.ExcelFile(xlsx_path)
+    except Exception as e:
+        console.print(f"[red]Failed to open Excel file: {e}[/red]")
+        return [], {}, {}, {"error": f"Failed to open Excel file: {e}"}
 
-    if week_df.empty:
-        console.print(f"[yellow]No data found for week {week_start}[/yellow]")
-        available_dates = df['Date'].dt.strftime('%Y-%m-%d').tolist()
-        console.print(f"[dim]Available dates: {available_dates[:5]}...{available_dates[-5:]}[/dim]")
-        return [], {}
+    available_sheets = xlsx.sheet_names
+    console.print(f"[dim]Available sheets: {available_sheets}[/dim]")
 
-    console.print(f"[green]Found {len(week_df)} days of data for week {week_start}[/green]")
+    # =========================================================================
+    # READ CALORIES & MACROS SHEET (nutrition data)
+    # =========================================================================
+    if 'Calories & Macros' in available_sheets:
+        df = pd.read_excel(xlsx, sheet_name='Calories & Macros')
+        df['Date'] = pd.to_datetime(df['Date'])
 
-    # Extract daily nutrition data
-    daily_data = []
-    day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        # Filter to the relevant week
+        mask = (df['Date'] >= week_start_dt) & (df['Date'] <= week_end_dt)
+        week_df = df[mask].copy()
 
-    for _, row in week_df.iterrows():
-        day_idx = row['Date'].weekday()
-        daily_data.append({
-            "day": day_names[day_idx],
-            "date": row['Date'].strftime('%Y-%m-%d'),
-            "calories": int(row.get('Calories (kcal)', 0)),
-            "protein": int(row.get('Protein (g)', 0)),
-            "carbs": int(row.get('Carbs (g)', 0)),
-            "fat": int(row.get('Fat (g)', 0)),
-            # Additional micronutrients (optional)
-            "fiber": round(row.get('Fiber (g)', 0), 1) if pd.notna(row.get('Fiber (g)')) else None,
-            "sodium": int(row.get('Sodium (mg)', 0)) if pd.notna(row.get('Sodium (mg)')) else None,
-            "steps": int(row.get('Steps', 0)) if pd.notna(row.get('Steps')) else None,
-        })
+        if week_df.empty:
+            console.print(f"[yellow]No nutrition data found for week {week_start}[/yellow]")
+            available_dates = df['Date'].dt.strftime('%Y-%m-%d').tolist()
+            console.print(f"[dim]Available dates: {available_dates[:5]}...{available_dates[-5:]}[/dim]")
+            data_notes["nutrition"] = f"No data in 'Calories & Macros' sheet for week {week_start}"
+            daily_data = []
+            averages = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
+        else:
+            console.print(f"[green]Found {len(week_df)} days of nutrition data for week {week_start}[/green]")
+            data_notes["nutrition"] = f"Found {len(week_df)} days in 'Calories & Macros' sheet"
 
-    # Sort by day of week
-    daily_data.sort(key=lambda x: day_names.index(x['day']))
+            # Extract daily nutrition data
+            daily_data = []
+            day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-    # Calculate averages
-    if daily_data:
-        averages = {
-            "calories": round(sum(d["calories"] for d in daily_data) / len(daily_data)),
-            "protein": round(sum(d["protein"] for d in daily_data) / len(daily_data)),
-            "carbs": round(sum(d["carbs"] for d in daily_data) / len(daily_data)),
-            "fat": round(sum(d["fat"] for d in daily_data) / len(daily_data))
-        }
+            for _, row in week_df.iterrows():
+                day_idx = row['Date'].weekday()
+                daily_data.append({
+                    "day": day_names[day_idx],
+                    "date": row['Date'].strftime('%Y-%m-%d'),
+                    "calories": int(row.get('Calories (kcal)', 0)),
+                    "protein": int(row.get('Protein (g)', 0)),
+                    "carbs": int(row.get('Carbs (g)', 0)),
+                    "fat": int(row.get('Fat (g)', 0)),
+                    # Additional micronutrients (optional)
+                    "fiber": round(row.get('Fiber (g)', 0), 1) if pd.notna(row.get('Fiber (g)')) else None,
+                    "sodium": int(row.get('Sodium (mg)', 0)) if pd.notna(row.get('Sodium (mg)')) else None,
+                })
+
+            # Sort by day of week
+            daily_data.sort(key=lambda x: day_names.index(x['day']))
+
+            # Calculate averages
+            averages = {
+                "calories": round(sum(d["calories"] for d in daily_data) / len(daily_data)),
+                "protein": round(sum(d["protein"] for d in daily_data) / len(daily_data)),
+                "carbs": round(sum(d["carbs"] for d in daily_data) / len(daily_data)),
+                "fat": round(sum(d["fat"] for d in daily_data) / len(daily_data))
+            }
     else:
+        console.print("[yellow]'Calories & Macros' sheet not found in export[/yellow]")
+        data_notes["nutrition"] = "'Calories & Macros' sheet not found in MacroFactor export"
+        daily_data = []
         averages = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
 
-    # Clean up daily data (remove date field for dashboard format)
-    for d in daily_data:
-        del d['date']
-        # Remove None values
-        d = {k: v for k, v in d.items() if v is not None}
+    # =========================================================================
+    # READ STEPS SHEET (merge with daily nutrition)
+    # =========================================================================
+    if 'Steps' in available_sheets:
+        try:
+            steps_df = pd.read_excel(xlsx, sheet_name='Steps')
+            steps_df['Date'] = pd.to_datetime(steps_df['Date'])
 
-    return daily_data, averages
+            # Filter to week
+            mask = (steps_df['Date'] >= week_start_dt) & (steps_df['Date'] <= week_end_dt)
+            week_steps = steps_df[mask].copy()
+
+            if not week_steps.empty:
+                # Create date-to-steps mapping
+                steps_map = {
+                    row['Date'].strftime('%Y-%m-%d'): int(row.get('Steps', 0))
+                    for _, row in week_steps.iterrows()
+                    if pd.notna(row.get('Steps'))
+                }
+
+                # Merge steps into daily_data
+                for d in daily_data:
+                    if d.get('date') in steps_map:
+                        d['steps'] = steps_map[d['date']]
+
+                data_notes["steps"] = f"Found {len(steps_map)} days of step data in 'Steps' sheet"
+                console.print(f"[green]Merged {len(steps_map)} days of step data[/green]")
+            else:
+                data_notes["steps"] = f"No step data for week {week_start} in 'Steps' sheet"
+        except Exception as e:
+            console.print(f"[yellow]Failed to read Steps sheet: {e}[/yellow]")
+            data_notes["steps"] = f"Error reading 'Steps' sheet: {e}"
+    else:
+        data_notes["steps"] = "'Steps' sheet not found in MacroFactor export"
+
+    # =========================================================================
+    # READ SCALE WEIGHT SHEET (weight and body fat)
+    # =========================================================================
+    if 'Scale Weight' in available_sheets:
+        try:
+            weight_df = pd.read_excel(xlsx, sheet_name='Scale Weight')
+            weight_df['Date'] = pd.to_datetime(weight_df['Date'])
+
+            # Filter to week and get LATEST entry (most recent measurement)
+            mask = (weight_df['Date'] >= week_start_dt) & (weight_df['Date'] <= week_end_dt)
+            week_weight = weight_df[mask].copy()
+
+            if not week_weight.empty:
+                # Sort by date descending to get latest
+                week_weight = week_weight.sort_values('Date', ascending=False)
+                latest = week_weight.iloc[0]
+                latest_date = latest['Date'].strftime('%Y-%m-%d')
+
+                # Extract weight (column is 'Weight (kg)')
+                if 'Weight (kg)' in week_weight.columns and pd.notna(latest.get('Weight (kg)')):
+                    measurements["weight"] = round(float(latest['Weight (kg)']), 1)
+                    data_notes["weight"] = f"Latest weight from 'Scale Weight' sheet ({latest_date})"
+                    console.print(f"[green]Found weight: {measurements['weight']} kg from {latest_date}[/green]")
+                else:
+                    data_notes["weight"] = f"'Weight (kg)' column missing or empty in 'Scale Weight' sheet for week {week_start}"
+
+                # Extract body fat (column is 'Fat Percent')
+                if 'Fat Percent' in week_weight.columns and pd.notna(latest.get('Fat Percent')):
+                    measurements["body_fat"] = round(float(latest['Fat Percent']), 1)
+                    data_notes["body_fat"] = f"Latest body fat from 'Scale Weight' sheet ({latest_date})"
+                    console.print(f"[green]Found body fat: {measurements['body_fat']}% from {latest_date}[/green]")
+                else:
+                    data_notes["body_fat"] = f"'Fat Percent' column missing or empty in 'Scale Weight' sheet for week {week_start}"
+            else:
+                data_notes["weight"] = f"No weight entries for week {week_start} in 'Scale Weight' sheet"
+                data_notes["body_fat"] = f"No body fat entries for week {week_start} in 'Scale Weight' sheet"
+                console.print(f"[yellow]No weight data for week {week_start}[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]Failed to read Scale Weight sheet: {e}[/yellow]")
+            data_notes["weight"] = f"Error reading 'Scale Weight' sheet: {e}"
+            data_notes["body_fat"] = f"Error reading 'Scale Weight' sheet: {e}"
+    else:
+        data_notes["weight"] = "'Scale Weight' sheet not found in MacroFactor export"
+        data_notes["body_fat"] = "'Scale Weight' sheet not found in MacroFactor export"
+
+    # =========================================================================
+    # READ BODY METRICS SHEET (waist, chest, hips, shoulders)
+    # =========================================================================
+    if 'Body Metrics' in available_sheets:
+        try:
+            metrics_df = pd.read_excel(xlsx, sheet_name='Body Metrics')
+            metrics_df['Date'] = pd.to_datetime(metrics_df['Date'])
+
+            # Filter to week and get LATEST entry
+            mask = (metrics_df['Date'] >= week_start_dt) & (metrics_df['Date'] <= week_end_dt)
+            week_metrics = metrics_df[mask].copy()
+
+            if not week_metrics.empty:
+                # Sort by date descending to get latest
+                week_metrics = week_metrics.sort_values('Date', ascending=False)
+                latest = week_metrics.iloc[0]
+                latest_date = latest['Date'].strftime('%Y-%m-%d')
+
+                # Map of measurement fields: (json_key, excel_column, unit)
+                # Maps dashboard fields to MacroFactor column names
+                metric_fields = [
+                    ("waist", "Waist (cm)", "cm"),
+                    ("chest", "Chest (cm)", "cm"),
+                    ("hips", "Hips (cm)", "cm"),
+                    ("shoulders", "Shoulders (cm)", "cm"),
+                    ("middle", "Bust (cm)", "cm"),       # middle = Bust measurement
+                    ("butt", "Hips (cm)", "cm"),         # butt = Hips (duplicate mapping)
+                    ("leg", "Right Thigh (cm)", "cm"),   # leg = Right Thigh
+                ]
+
+                for json_key, excel_col, unit in metric_fields:
+                    if excel_col in week_metrics.columns and pd.notna(latest.get(excel_col)):
+                        measurements[json_key] = round(float(latest[excel_col]), 1)
+                        data_notes[json_key] = f"Latest {json_key} from 'Body Metrics' sheet ({latest_date})"
+                        console.print(f"[green]Found {json_key}: {measurements[json_key]} {unit} from {latest_date}[/green]")
+                    else:
+                        data_notes[json_key] = f"'{excel_col}' column missing or empty in 'Body Metrics' sheet for week {week_start}"
+            else:
+                # No data for this week - note which metrics are affected
+                for metric in ["waist", "chest", "hips", "shoulders"]:
+                    data_notes[metric] = f"No body metrics entries for week {week_start} in 'Body Metrics' sheet"
+                console.print(f"[yellow]No body metrics data for week {week_start}[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]Failed to read Body Metrics sheet: {e}[/yellow]")
+            for metric in ["waist", "chest", "hips", "shoulders"]:
+                data_notes[metric] = f"Error reading 'Body Metrics' sheet: {e}"
+    else:
+        for metric in ["waist", "chest", "hips", "shoulders"]:
+            data_notes[metric] = "'Body Metrics' sheet not found in MacroFactor export"
+
+    # =========================================================================
+    # CLEAN UP DAILY DATA
+    # =========================================================================
+    # Remove date field for dashboard format (keep only day name)
+    for d in daily_data:
+        if 'date' in d:
+            del d['date']
+        # Remove None values from each day's data
+        keys_to_remove = [k for k, v in d.items() if v is None]
+        for k in keys_to_remove:
+            del d[k]
+
+    # Remove None values from measurements for cleaner output
+    measurements_clean = {k: v for k, v in measurements.items() if v is not None}
+
+    # Log summary
+    found_measurements = [k for k, v in measurements.items() if v is not None]
+    missing_measurements = [k for k, v in measurements.items() if v is None]
+    if found_measurements:
+        console.print(f"[green]Measurements found: {', '.join(found_measurements)}[/green]")
+    if missing_measurements:
+        console.print(f"[yellow]Measurements missing: {', '.join(missing_measurements)}[/yellow]")
+
+    return daily_data, averages, measurements_clean, data_notes
 
 
 def cmd_macrofactor_gmail():
@@ -1220,7 +1408,15 @@ def cmd_macrofactor_gmail():
             week_start = Prompt.ask("Week start date (YYYY-MM-DD)", default=get_current_week_start())
 
             # Parse the XLSX and filter to week
-            daily_data, averages = parse_macrofactor_xlsx(xlsx_path, week_start)
+            # Handle both old (2-value) and new (4-value) return format
+            result = parse_macrofactor_xlsx(xlsx_path, week_start)
+            if isinstance(result, tuple) and len(result) == 4:
+                daily_data, averages, measurements, data_notes = result
+            elif isinstance(result, tuple) and len(result) == 2:
+                daily_data, averages = result
+                measurements, data_notes = {}, {}
+            else:
+                daily_data, averages, measurements, data_notes = [], {}, {}, {}
 
             if not daily_data:
                 return
@@ -1231,6 +1427,21 @@ def cmd_macrofactor_gmail():
             # Update nutrition section
             data["nutrition"]["daily"] = daily_data
             data["nutrition"]["averages"] = averages
+
+            # Update measurements from MacroFactor data
+            if measurements:
+                if "measurements" not in data:
+                    data["measurements"] = {}
+                for key, value in measurements.items():
+                    if value is not None:
+                        data["measurements"][key] = value
+
+            # Store data notes in metadata for debugging
+            if data_notes:
+                if "_meta" not in data:
+                    data["_meta"] = {}
+                data["_meta"]["data_notes"] = data_notes
+                data["_meta"]["macrofactor_import_date"] = datetime.now().isoformat()
 
             # Generate notes based on targets
             targets = data["nutrition"]["targets"]
@@ -1282,6 +1493,94 @@ def cmd_macrofactor_gmail():
             console.print(table)
             console.print(f"\n[dim]Notes: {data['nutrition']['notes']}[/dim]")
 
+            # Display measurements summary
+            if measurements:
+                console.print("\n[bold cyan]Measurements from MacroFactor:[/bold cyan]")
+                measurement_labels = {
+                    'weight': 'Weight',
+                    'body_fat': 'Body Fat %',
+                    'waist': 'Waist',
+                    'chest': 'Chest',
+                    'hips': 'Hips',
+                    'shoulders': 'Shoulders',
+                    'steps_avg': 'Avg Steps'
+                }
+                found_measurements = []
+                missing_measurements = []
+                for key, label in measurement_labels.items():
+                    value = measurements.get(key)
+                    if value is not None:
+                        unit = 'kg' if key == 'weight' else '%' if key == 'body_fat' else 'cm' if key in ['waist', 'chest', 'hips', 'shoulders'] else ''
+                        found_measurements.append(f"{label}: {value}{unit}")
+                    else:
+                        missing_measurements.append(label)
+
+                if found_measurements:
+                    console.print(f"  [green]Found:[/green] {', '.join(found_measurements)}")
+                if missing_measurements:
+                    console.print(f"  [dim]Missing:[/dim] {', '.join(missing_measurements)}")
+
+                # Warning for critical missing measurements
+                if measurements.get('weight') is None:
+                    console.print("\n[yellow]Warning:[/yellow] Weight data not found in MacroFactor export.")
+                    console.print("[dim]Consider entering weight manually in the admin dashboard.[/dim]")
+            else:
+                console.print("\n[yellow]No measurements found in MacroFactor export.[/yellow]")
+                console.print("[dim]Weight, body fat, and body metrics will need to be entered manually.[/dim]")
+
+            # Show data notes if there were any issues
+            if data_notes:
+                console.print("\n[dim]Data Notes:[/dim]")
+                for note_key, note_value in data_notes.items():
+                    console.print(f"  [dim]- {note_key}: {note_value}[/dim]")
+
+            # Update _meta with pending_actions for admin dashboard
+            if "_meta" not in data:
+                data["_meta"] = {}
+            data["_meta"]["pending_actions"] = data["_meta"].get("pending_actions", [])
+
+            # Check for missing measurements and add pending actions
+            critical_missing = []
+            if not measurements.get("weight"):
+                critical_missing.append("weight")
+                if not any(a.get("field") == "weight" for a in data["_meta"]["pending_actions"]):
+                    data["_meta"]["pending_actions"].append({
+                        "type": "missing_data",
+                        "field": "weight",
+                        "message": "Weight not found in MacroFactor export",
+                        "action": "Enter manually via 'coach-ingest weekly' or import from file"
+                    })
+            if not measurements.get("waist"):
+                critical_missing.append("waist")
+                if not any(a.get("field") == "waist" for a in data["_meta"]["pending_actions"]):
+                    data["_meta"]["pending_actions"].append({
+                        "type": "missing_data",
+                        "field": "waist",
+                        "message": "Waist measurement not found in MacroFactor export",
+                        "action": "Enter manually via 'coach-ingest weekly'"
+                    })
+
+            # Update data_completeness based on measurements
+            if "data_completeness" not in data["_meta"]:
+                data["_meta"]["data_completeness"] = {}
+            data["_meta"]["data_completeness"]["measurements"] = len(critical_missing) == 0
+            data["_meta"]["data_completeness"]["nutrition"] = len(daily_data) >= 5
+
+            # Clean up pending_actions - remove resolved items
+            if data.get("measurements", {}).get("weight"):
+                data["_meta"]["pending_actions"] = [
+                    a for a in data["_meta"]["pending_actions"]
+                    if a.get("field") != "weight"
+                ]
+            if data.get("measurements", {}).get("waist"):
+                data["_meta"]["pending_actions"] = [
+                    a for a in data["_meta"]["pending_actions"]
+                    if a.get("field") != "waist"
+                ]
+
+            # Re-save with updated metadata
+            save_week_data(data, week_start)
+
     except Exception as e:
         console.print(f"[red]Error accessing Gmail: {e}[/red]")
         import traceback
@@ -1306,7 +1605,15 @@ def cmd_macrofactor_file(file_path: str = None):
 
     week_start = Prompt.ask("Week start date (YYYY-MM-DD)", default=get_current_week_start())
 
-    daily_data, averages = parse_macrofactor_xlsx(xlsx_path, week_start)
+    # Handle both old (2-value) and new (4-value) return format
+    result = parse_macrofactor_xlsx(xlsx_path, week_start)
+    if isinstance(result, tuple) and len(result) == 4:
+        daily_data, averages, measurements, data_notes = result
+    elif isinstance(result, tuple) and len(result) == 2:
+        daily_data, averages = result
+        measurements, data_notes = {}, {}
+    else:
+        daily_data, averages, measurements, data_notes = [], {}, {}, {}
 
     if not daily_data:
         return
@@ -1316,6 +1623,81 @@ def cmd_macrofactor_file(file_path: str = None):
     data["nutrition"]["daily"] = daily_data
     data["nutrition"]["averages"] = averages
 
+    # Update measurements from MacroFactor data and show import status
+    measurement_labels = {
+        'weight': ('Weight', 'kg'),
+        'body_fat': ('Body Fat %', '%'),
+        'waist': ('Waist', 'cm'),
+        'chest': ('Chest', 'cm'),
+        'hips': ('Hips', 'cm'),
+        'shoulders': ('Shoulders', 'cm'),
+        'steps_avg': ('Avg Steps', '')
+    }
+
+    imported_measurements = []
+    missing_measurements = []
+
+    if measurements:
+        if "measurements" not in data:
+            data["measurements"] = {}
+        for key, value in measurements.items():
+            if value is not None:
+                data["measurements"][key] = value
+                if key in measurement_labels:
+                    label, unit = measurement_labels[key]
+                    imported_measurements.append(f"{label}: {value}{unit}")
+
+        # Track missing measurements
+        for key in measurement_labels.keys():
+            if key not in measurements or measurements.get(key) is None:
+                missing_measurements.append(key)
+
+        # Show user what was imported vs missing
+        console.print("\n[bold cyan]Measurements from MacroFactor:[/bold cyan]")
+        if imported_measurements:
+            console.print(f"  [green]Imported:[/green] {', '.join(imported_measurements)}")
+        if missing_measurements:
+            missing_labels = [measurement_labels[k][0] for k in missing_measurements if k in measurement_labels]
+            if missing_labels:
+                console.print(f"  [yellow]Missing:[/yellow] {', '.join(missing_labels)}")
+    else:
+        missing_measurements = list(measurement_labels.keys())
+        console.print("\n[yellow]No measurements found in MacroFactor export.[/yellow]")
+        console.print("[dim]Weight, body fat, and body metrics will need to be entered manually.[/dim]")
+
+    # Store data_notes in metadata
+    if "_meta" not in data:
+        data["_meta"] = {}
+    data["_meta"]["data_notes"] = data_notes
+    data["_meta"]["import_source"] = "macrofactor_file"
+    data["_meta"]["import_timestamp"] = datetime.now().isoformat()
+
+    # Prompt for manual weight entry if missing
+    if "weight" in missing_measurements:
+        enter_manual = Prompt.ask(
+            "\n[yellow]Weight not found in export. Enter manually?[/yellow]",
+            choices=["y", "n"],
+            default="y"
+        )
+        if enter_manual.lower() == "y":
+            weight_input = Prompt.ask("Enter weight (kg)")
+            try:
+                weight = float(weight_input)
+                if "measurements" not in data:
+                    data["measurements"] = {}
+                data["measurements"]["weight"] = weight
+                console.print(f"[green]Weight set to {weight} kg[/green]")
+                # Remove weight from missing since it was just entered
+                missing_measurements.remove("weight")
+            except ValueError:
+                console.print("[red]Invalid weight value - skipped[/red]")
+
+    # Show data notes if there were any issues
+    if data_notes:
+        console.print("\n[dim]Data Notes:[/dim]")
+        for note_key, note_value in data_notes.items():
+            console.print(f"  [dim]- {note_key}: {note_value}[/dim]")
+
     # Generate notes
     targets = data["nutrition"]["targets"]
     cal_pct = round(averages["calories"] / targets["calories"] * 100) if targets["calories"] else 100
@@ -1323,9 +1705,60 @@ def cmd_macrofactor_file(file_path: str = None):
 
     data["nutrition"]["notes"] = f"{cal_pct}% of calorie target. Protein at {prot_pct}%."
 
+    # Update _meta with pending_actions for admin dashboard
+    if "_meta" not in data:
+        data["_meta"] = {}
+    data["_meta"]["pending_actions"] = data["_meta"].get("pending_actions", [])
+
+    # Check for missing measurements and add pending actions
+    critical_missing = []
+    if not measurements.get("weight") and not data.get("measurements", {}).get("weight"):
+        critical_missing.append("weight")
+        if not any(a.get("field") == "weight" for a in data["_meta"]["pending_actions"]):
+            data["_meta"]["pending_actions"].append({
+                "type": "missing_data",
+                "field": "weight",
+                "message": "Weight not found in MacroFactor export",
+                "action": "Enter manually via 'coach-ingest weekly' or import from file"
+            })
+    if not measurements.get("waist") and not data.get("measurements", {}).get("waist"):
+        critical_missing.append("waist")
+        if not any(a.get("field") == "waist" for a in data["_meta"]["pending_actions"]):
+            data["_meta"]["pending_actions"].append({
+                "type": "missing_data",
+                "field": "waist",
+                "message": "Waist measurement not found in MacroFactor export",
+                "action": "Enter manually via 'coach-ingest weekly'"
+            })
+
+    # Update data_completeness based on measurements
+    if "data_completeness" not in data["_meta"]:
+        data["_meta"]["data_completeness"] = {}
+    data["_meta"]["data_completeness"]["measurements"] = len(critical_missing) == 0
+    data["_meta"]["data_completeness"]["nutrition"] = len(daily_data) >= 5
+
+    # Clean up pending_actions - remove resolved items
+    if data.get("measurements", {}).get("weight"):
+        data["_meta"]["pending_actions"] = [
+            a for a in data["_meta"]["pending_actions"]
+            if a.get("field") != "weight"
+        ]
+    if data.get("measurements", {}).get("waist"):
+        data["_meta"]["pending_actions"] = [
+            a for a in data["_meta"]["pending_actions"]
+            if a.get("field") != "waist"
+        ]
+
     save_week_data(data, week_start)
 
     console.print(f"\n[bold green]Imported {len(daily_data)} days of nutrition data![/bold green]")
+
+    # Show pending actions if any
+    if data["_meta"]["pending_actions"]:
+        console.print("\n[yellow]Pending actions for admin dashboard:[/yellow]")
+        for action in data["_meta"]["pending_actions"]:
+            console.print(f"  - {action['message']}")
+            console.print(f"    [dim]{action['action']}[/dim]")
 
 
 # ============================================================================

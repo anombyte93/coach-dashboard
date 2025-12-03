@@ -21,18 +21,24 @@
       "program_ref": "../program.json"
     },
     "data_completeness": {
-      "measurements": false,
+      "measurements": true,
       "training": true,
       "nutrition": true,
       "whoop": true,
       "wellbeing": true
+    },
+    "pending_actions": [],
+    "data_notes": {
+      "weight": "From Nov 12 MacroFactor (closest available)",
+      "body_metrics": "From Nov 25 MacroFactor Body Metrics sheet",
+      "missing": "middle (Bust), shoulders not recorded in MacroFactor for this period"
     }
   },
   "_ai_context": {
     "summary": "Week 2 - Major breakthrough week! Client hit Squat PR and Bench PR. Flexibility work paying off significantly. Calorie intake normalized to 105% of target. Recovery improved to 64% avg despite variable days (15-87%). Sleep slightly improved at 6.0h avg. Low stress, positive mood. Strong momentum building.",
     "status": "progressing",
     "key_metrics": {
-      "weight_kg": null,
+      "weight_kg": 114.9,
       "avg_calories": 2862,
       "avg_protein_g": 161,
       "protein_target_pct": 83,
@@ -40,8 +46,8 @@
       "avg_recovery_pct": 64,
       "total_steps": 65874
     },
-    "flags": ["pr_week", "flexibility_breakthrough", "missing_measurements"],
-    "coach_priority": "Capitalize on PR momentum, continue flexibility work, get body measurements",
+    "flags": ["pr_week", "flexibility_breakthrough"],
+    "coach_priority": "Capitalize on PR momentum, continue flexibility work",
     "week_vs_previous": {
       "calories_delta": -585,
       "recovery_delta": "+7%",
@@ -52,13 +58,15 @@
   },
   "weekOf": "2025-11-23",
   "measurements": {
-    "weight": null,
-    "waist": null,
-    "chest": null,
+    "weight": 114.9,
+    "waist": 86.0,
+    "chest": 120.0,
     "middle": null,
-    "butt": null,
-    "leg": null,
-    "steps": 65874
+    "butt": 110.0,
+    "leg": 68.0,
+    "steps": 65874,
+    "hips": 110.0,
+    "shoulders": null
   },
   "training": {
     "overall_performance": "Excellent - hit Squat and Bench PRs!",

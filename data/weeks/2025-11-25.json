@@ -1,0 +1,191 @@
+{
+  "weekOf": "2025-11-25",
+  "measurements": {
+    "weight": 114.6,
+    "waist": 97.0,
+    "chest": 117.0,
+    "middle": 117.0,
+    "butt": 114.0,
+    "leg": 66.0,
+    "steps": 69027,
+    "hips": 114.0,
+    "shoulders": 135.0
+  },
+  "training": {
+    "overall_performance": "",
+    "completed": "",
+    "difficulty": "",
+    "recovery": "",
+    "enjoyment": ""
+  },
+  "nutrition": {
+    "daily": [
+      {
+        "day": "Tue",
+        "calories": 2677,
+        "protein": 132,
+        "carbs": 298,
+        "fat": 110,
+        "steps": 9861
+      },
+      {
+        "day": "Wed",
+        "calories": 2709,
+        "protein": 133,
+        "carbs": 236,
+        "fat": 138,
+        "steps": 9861
+      },
+      {
+        "day": "Thu",
+        "calories": 2567,
+        "protein": 116,
+        "carbs": 288,
+        "fat": 104,
+        "steps": 9861
+      },
+      {
+        "day": "Fri",
+        "calories": 2720,
+        "protein": 188,
+        "carbs": 277,
+        "fat": 112,
+        "steps": 9861
+      },
+      {
+        "day": "Sat",
+        "calories": 3699,
+        "protein": 227,
+        "carbs": 293,
+        "fat": 169,
+        "steps": 9861
+      },
+      {
+        "day": "Sun",
+        "calories": 2304,
+        "protein": 176,
+        "carbs": 225,
+        "fat": 83,
+        "steps": 9861
+      },
+      {
+        "day": "Mon",
+        "calories": 2779,
+        "protein": 233,
+        "carbs": 245,
+        "fat": 113,
+        "steps": 9861
+      }
+    ],
+    "averages": {
+      "calories": 2779,
+      "protein": 172,
+      "carbs": 266,
+      "fat": 118
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 314,
+      "fat": 102
+    },
+    "notes": "102% of calorie target (2779 avg). Protein at 88% (172g avg). Steps: 69,027 total (9,861/day avg from Apple Health)."
+  },
+  "whoop": {
+    "daily": [
+      {
+        "day": "Wed",
+        "date": "2025-11-26",
+        "hrv": 47,
+        "rhr": 68,
+        "sleep": 7.4,
+        "strain": 28.4,
+        "recovery": 87
+      },
+      {
+        "day": "Fri",
+        "date": "2025-11-28",
+        "hrv": 41,
+        "rhr": 66,
+        "sleep": 5.5,
+        "strain": 16.4,
+        "recovery": 67
+      },
+      {
+        "day": "Sat",
+        "date": "2025-11-29",
+        "hrv": 28,
+        "rhr": 75,
+        "sleep": 4.6,
+        "strain": 16.2,
+        "recovery": 27
+      }
+    ],
+    "averages": {
+      "hrv": 39,
+      "rhr": 70,
+      "sleep": 5.8,
+      "strain": 20.3,
+      "recovery": 60
+    },
+    "sleep_metrics": {
+      "avg_duration": 5.8,
+      "avg_efficiency": 0,
+      "avg_need": 8.0,
+      "avg_debt": 0,
+      "consistency": 0
+    },
+    "interpretation": "Moderate recovery (60%) with avg 5.8h sleep. Recovery variable (27-87%). High strain at 20.3 avg. Only 3 days of WHOOP data available."
+  },
+  "wellbeing": {
+    "pain": "",
+    "appetite": "",
+    "cravings": "",
+    "stress": "",
+    "mood": "",
+    "recovery_outside_gym": "",
+    "lifestyle_factors": ""
+  },
+  "wins": [],
+  "coach_questions": "",
+  "daily_checkins": [],
+  "blockers": [],
+  "velocity": {
+    "adherence_change": 0,
+    "mood_trend": "stable",
+    "energy_trend": "stable"
+  },
+  "coach_prep": {
+    "last_session_notes": "",
+    "focus_areas": [],
+    "suggested_topics": []
+  },
+  "_meta": {
+    "week_id": "2025-W48-MON",
+    "interval": {
+      "startDate": "2025-11-25",
+      "endDate": "2025-12-01"
+    },
+    "display_label": "Nov 25 – Dec 1, 2025",
+    "navigation": {
+      "prev_week_id": "2025-W47-SUN",
+      "next_week_id": null,
+      "week_number": 3
+    },
+    "data_notes": {
+      "nutrition": "7 days from MacroFactor 'Calories & Macros' sheet",
+      "steps": "9861/day avg from Apple Health (Nov 25 - Dec 1)",
+      "weight": "Latest weight from MacroFactor 'Scale Weight' sheet (2025-12-01)",
+      "measurements": "Full body metrics from MacroFactor (2025-12-01): Bust->middle, Hips->butt, Right Thigh->leg",
+      "whoop": "3 days of WHOOP data available (Wed, Fri, Sat)"
+    },
+    "import_source": "macrofactor_file + whoop_zip + apple_health",
+    "import_timestamp": "2025-12-03T18:35:00.000000",
+    "pending_actions": [],
+    "data_completeness": {
+      "measurements": true,
+      "nutrition": true,
+      "whoop": true
+    }
+  }
+}

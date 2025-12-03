@@ -212,6 +212,24 @@
       border-color: var(--blue);
     }
 
+    .week-tab.partial::after {
+      content: '\26A0';
+      margin-left: 4px;
+      color: #f59e0b;
+    }
+
+    .week-tab.active.partial::after {
+      color: #fef3c7;
+    }
+
+    .badge-warning {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 4px;
+      font-size: 0.75rem;
+      color: #f59e0b;
+    }
+
     /* CSV Helper Modal */
     .modal-overlay {
       display: none;
@@ -430,6 +448,11 @@
       color: var(--blue);
     }
 
+    .text-placeholder {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
     /* Notes Sections */
     .notes-section {
       font-size: 0.875rem;
@@ -468,6 +491,42 @@
     .comparison-grid .target {
       color: var(--gray-600);
       font-weight: 400;
+    }
+
+    /* Week-over-week comparison indicators */
+    .trend-up {
+      color: var(--green);
+      font-weight: 600;
+    }
+    .trend-down {
+      color: var(--red);
+      font-weight: 600;
+    }
+    .trend-same {
+      color: var(--gray-600);
+    }
+    .trend-indicator {
+      margin-left: 0.25rem;
+      font-size: 0.75rem;
+    }
+    .trend-indicator.positive { color: var(--green); }
+    .trend-indicator.negative { color: var(--red); }
+    .trend-indicator.neutral { color: var(--gray-600); }
+
+    /* Missing data indicator for charts */
+    .missing-data-notice {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px dashed var(--red);
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      text-align: center;
+    }
+    .missing-data-notice .icon {
+      color: var(--red);
+      margin-right: 0.25rem;
     }
 
     /* Section Headers */
@@ -537,6 +596,119 @@
 
     .print-footer {
       display: none;
+    }
+
+    /* Toast Notifications */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 8px;
+      background: #1f2937;
+      color: white;
+      z-index: 1000;
+      animation: toastFadeIn 0.3s ease;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .toast-warning { background: #f59e0b; color: #1f2937; }
+    .toast-error { background: #ef4444; color: white; }
+    .toast-success { background: #22c55e; color: white; }
+
+    @keyframes toastFadeIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* Admin Pending Actions */
+    .pending-actions-container {
+      margin-bottom: 1.5rem;
+    }
+
+    .pending-actions-container.hidden {
+      display: none;
+    }
+
+    .pending-action-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-left: 4px solid #f59e0b;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .pending-action-card.error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-left-color: #ef4444;
+    }
+
+    .pending-action-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      color: #f59e0b;
+    }
+
+    .pending-action-card.error .pending-action-icon {
+      color: #ef4444;
+    }
+
+    .pending-action-content {
+      flex-grow: 1;
+    }
+
+    .pending-action-title {
+      font-weight: 600;
+      color: var(--gray-800);
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .pending-action-message {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-bottom: 0.5rem;
+    }
+
+    .pending-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 4px;
+      background: #f59e0b;
+      color: white;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .pending-action-btn:hover {
+      background: #d97706;
+    }
+
+    .pending-action-card.error .pending-action-btn {
+      background: #ef4444;
+    }
+
+    .pending-action-card.error .pending-action-btn:hover {
+      background: #dc2626;
+    }
+
+    @media print {
+      .pending-actions-container {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -614,6 +786,11 @@
       <p id="aiInsight">Loading insight...</p>
     </div>
 
+    <!-- Admin: Pending Actions (only visible to admin users) -->
+    <div class="pending-actions-container hidden" id="pendingActionsContainer">
+      <!-- Populated by JavaScript when pending actions exist -->
+    </div>
+
     <!-- Summary Cards -->
     <div class="grid" id="summaryGrid">
       <div class="card recovery-card">
@@ -634,8 +811,8 @@
         <p class="recovery-label">avg per day</p>
       </div>
 
-      <div class="card">
-        <h2>Measurements</h2>
+      <div class="card" id="measurementsCard">
+        <h2 id="measurementsHeader">Measurements</h2>
         <table class="measurements-table" id="measurementsTable">
           <tbody></tbody>
         </table>
@@ -842,13 +1019,98 @@
   <script>
     // ===== WEEK MANAGEMENT =====
     // Available weeks (add new weeks here as files are created in data/weeks/)
-    const availableWeeks = ['2025-11-16', '2025-11-23'];
+    const availableWeeks = ['2025-11-23', '2025-11-25'];
     let currentWeekIndex = 0;
     let chartInstances = {};
+    let previousWeekData = null; // Cache for week-over-week comparisons
 
     // Load embedded JSON data (fallback/default)
     let data = JSON.parse(document.getElementById('dashboardData').textContent);
-    let days = data.whoop.daily.map(d => d.day);
+
+    // ===== WEEK-OVER-WEEK COMPARISON HELPERS =====
+    // Calculate trend indicator (↑ ↓ ~) based on current vs previous value
+    // higherIsBetter: true for metrics where increase is positive (e.g., HRV, protein)
+    // false for metrics where decrease is positive (e.g., RHR, body fat)
+    function getTrendIndicator(current, previous, higherIsBetter = true, threshold = 0.05) {
+      if (previous === null || previous === undefined || previous === 0) return { icon: '', class: 'neutral', diff: 0 };
+
+      const diff = current - previous;
+      const percentChange = Math.abs(diff / previous);
+
+      // Within threshold = essentially same
+      if (percentChange < threshold) {
+        return { icon: '~', class: 'neutral', diff: 0 };
+      }
+
+      const isIncrease = diff > 0;
+      const isPositive = higherIsBetter ? isIncrease : !isIncrease;
+
+      return {
+        icon: isIncrease ? '↑' : '↓',
+        class: isPositive ? 'positive' : 'negative',
+        diff: diff
+      };
+    }
+
+    // Format trend display with value and indicator
+    function formatWithTrend(value, previous, unit = '', higherIsBetter = true) {
+      const trend = getTrendIndicator(parseFloat(value), parseFloat(previous), higherIsBetter);
+      const trendHtml = trend.icon
+        ? `<span class="trend-indicator ${trend.class}">${trend.icon}</span>`
+        : '';
+      return `${value}${unit}${trendHtml}`;
+    }
+
+    // Count missing days in WHOOP data for a week
+    function countMissingWhoopDays(whoopDaily, totalDays = 7) {
+      if (!whoopDaily || !Array.isArray(whoopDaily)) return totalDays;
+      return totalDays - whoopDaily.length;
+    }
+
+    // Generate missing data notice HTML
+    function getMissingDataNotice(missingDays, source = 'WHOOP') {
+      if (missingDays === 0) return '';
+      return `<div class="missing-data-notice">
+        <span class="icon">⚠</span>
+        ${source} data missing for ${missingDays} day${missingDays > 1 ? 's' : ''} this week
+      </div>`;
+    }
+
+    // ===== DAY ALIGNMENT HELPERS =====
+    // Canonical 7-day array - prefer nutrition (more complete) as source of truth
+    function getCanonicalDays(weekData) {
+      return weekData.nutrition?.daily?.map(d => d.day)
+        || weekData.whoop?.daily?.map(d => d.day)
+        || ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    }
+
+    // Map sparse data (like WHOOP) onto canonical days, returning array with nulls for missing days
+    function normalizeToCanonicalDays(sparseArray, canonicalDays, dayKey = 'day') {
+      const byDay = new Map(sparseArray.map(entry => [entry[dayKey], entry]));
+      return canonicalDays.map(day => byDay.get(day) ?? null);
+    }
+
+    // Extract a specific field from normalized array, preserving nulls for Chart.js gaps
+    function extractField(normalizedArray, field) {
+      return normalizedArray.map(entry => entry ? entry[field] : null);
+    }
+
+    let days = getCanonicalDays(data);
+
+    // ===== TOAST NOTIFICATIONS =====
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'polite');
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 5000);
+    }
 
     // ===== PDF EXPORT =====
     function exportPDF() {
@@ -1006,12 +1268,13 @@
           tab.textContent = 'Week of ' + label;
         }
 
-        // Show data completeness indicator if available
+        // Show data completeness indicator if measurements incomplete
         if (meta && meta.data_completeness) {
-          const complete = Object.values(meta.data_completeness).every(v => v);
-          if (!complete) {
-            tab.textContent += ' (partial)';
-            tab.style.fontStyle = 'italic';
+          const isMeasurementsComplete = meta.data_completeness.measurements !== false;
+          if (!isMeasurementsComplete) {
+            tab.classList.add('partial');
+            tab.setAttribute('role', 'status');
+            tab.setAttribute('aria-label', `${tab.textContent} - Measurements incomplete`);
           }
         }
 
@@ -1054,6 +1317,10 @@
       document.getElementById('wellbeingNotes').innerHTML = '';
       document.getElementById('winsNotes').innerHTML = '';
       document.getElementById('coachQuestions').innerHTML = '';
+      document.getElementById('pendingActionsContainer').innerHTML = '';
+
+      // Render pending actions (admin only)
+      renderPendingActions();
 
       // Reset recovery score classes
       const recoveryEl = document.getElementById('recoveryScore');
@@ -1087,8 +1354,11 @@
     // Avg Calories Card
     document.getElementById('avgCalories').textContent = data.nutrition.averages.calories.toLocaleString();
 
-    // Avg Steps Card (daily average from weekly total)
-    const avgSteps = Math.round(data.measurements.steps / 7);
+    // Avg Steps Card (prefer daily granular data, fall back to weekly total / 7)
+    const hasDailySteps = Array.isArray(data.nutrition?.daily) && data.nutrition.daily.some(d => typeof d.steps === 'number');
+    const avgSteps = hasDailySteps
+      ? Math.round(data.nutrition.daily.reduce((sum, day) => sum + (day.steps || 0), 0) / data.nutrition.daily.length)
+      : Math.round((data.measurements?.steps || 0) / 7);
     document.getElementById('avgSteps').textContent = avgSteps.toLocaleString();
 
     // AI Insight - Generate based on data
@@ -1138,39 +1408,132 @@
 
     document.getElementById('aiInsight').textContent = generateInsight();
 
-    // Measurements Table
+    // Measurements card - Update header for incomplete data indicator
+    const isMeasurementsComplete = data._meta?.data_completeness?.measurements !== false;
+    const measurementsHeader = document.getElementById('measurementsHeader');
+    if (!isMeasurementsComplete) {
+      measurementsHeader.innerHTML = 'Measurements <span class="badge-warning" role="status" aria-label="Measurements incomplete">(Incomplete)</span>';
+    } else {
+      measurementsHeader.textContent = 'Measurements';
+    }
+
+    // Measurements Table - Helper for null-safe rendering
+    const formatMeasurement = (value, unit) => {
+      if (value == null) return { text: '–', isPlaceholder: true };
+      return { text: `${value} ${unit}`, isPlaceholder: false };
+    };
+
     const measurementsData = [
-      { label: 'Weight', value: `${data.measurements.weight} kg`, highlight: true },
-      { label: 'Waist', value: `${data.measurements.waist} cm` },
-      { label: 'Chest', value: `${data.measurements.chest} cm` },
-      { label: 'Middle', value: `${data.measurements.middle} cm` },
-      { label: 'Butt', value: `${data.measurements.butt} cm` },
-      { label: 'Leg', value: `${data.measurements.leg} cm` },
-      { label: 'Weekly Steps', value: data.measurements.steps.toLocaleString() }
+      { label: 'Weight', ...formatMeasurement(data.measurements.weight, 'kg'), highlight: true },
+      { label: 'Waist', ...formatMeasurement(data.measurements.waist, 'cm') },
+      { label: 'Chest', ...formatMeasurement(data.measurements.chest, 'cm') },
+      { label: 'Middle', ...formatMeasurement(data.measurements.middle, 'cm') },
+      { label: 'Butt', ...formatMeasurement(data.measurements.butt, 'cm') },
+      { label: 'Leg', ...formatMeasurement(data.measurements.leg, 'cm') },
+      { label: 'Weekly Steps', text: data.measurements.steps?.toLocaleString() ?? '–', isPlaceholder: data.measurements.steps == null }
     ];
 
     const tbody = document.querySelector('#measurementsTable tbody');
     measurementsData.forEach(m => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${m.label}</td><td class="${m.highlight ? 'highlight' : ''}">${m.value}</td>`;
+      const classes = [m.highlight ? 'highlight' : '', m.isPlaceholder ? 'text-placeholder' : ''].filter(Boolean).join(' ');
+      tr.innerHTML = `<td>${m.label}</td><td class="${classes}">${m.text}</td>`;
       tbody.appendChild(tr);
     });
 
-    // Weekly Averages Grid
+    // Weekly Averages Grid with week-over-week comparison
     const averagesGrid = document.getElementById('averagesGrid');
+
+    // Get previous week values if available
+    const prevNutrition = previousWeekData?.nutrition?.averages || {};
+    const prevWhoop = previousWeekData?.whoop?.averages || {};
+
+    // Build average items with trend indicators
+    // higherIsBetter: true = ↑ is green, false = ↓ is green
     const avgItems = [
-      { label: 'Calories', actual: data.nutrition.averages.calories, target: data.nutrition.targets.calories },
-      { label: 'Protein', actual: `${data.nutrition.averages.protein}g`, target: `${data.nutrition.targets.protein}g` },
-      { label: 'Carbs', actual: `${data.nutrition.averages.carbs}g`, target: `${data.nutrition.targets.carbs}g` },
-      { label: 'Fat', actual: `${data.nutrition.averages.fat}g`, target: `${data.nutrition.targets.fat}g` },
-      { label: 'Avg Sleep', actual: `${data.whoop.averages.sleep}h`, target: '8h' },
-      { label: 'Avg HRV', actual: `${data.whoop.averages.hrv}ms`, target: '50ms+' }
+      {
+        label: 'Calories',
+        actual: data.nutrition.averages.calories,
+        prev: prevNutrition.calories,
+        target: data.nutrition.targets.calories,
+        unit: '',
+        higherIsBetter: true // More calories = better adherence (assuming bulk/maintain)
+      },
+      {
+        label: 'Protein',
+        actual: data.nutrition.averages.protein,
+        prev: prevNutrition.protein,
+        target: data.nutrition.targets.protein,
+        unit: 'g',
+        higherIsBetter: true
+      },
+      {
+        label: 'Carbs',
+        actual: data.nutrition.averages.carbs,
+        prev: prevNutrition.carbs,
+        target: data.nutrition.targets.carbs,
+        unit: 'g',
+        higherIsBetter: true
+      },
+      {
+        label: 'Fat',
+        actual: data.nutrition.averages.fat,
+        prev: prevNutrition.fat,
+        target: data.nutrition.targets.fat,
+        unit: 'g',
+        higherIsBetter: null // Neutral - fat is context dependent
+      },
+      {
+        label: 'Avg Sleep',
+        actual: data.whoop.averages.sleep,
+        prev: prevWhoop.sleep,
+        target: 8,
+        unit: 'h',
+        higherIsBetter: true
+      },
+      {
+        label: 'Avg HRV',
+        actual: data.whoop.averages.hrv,
+        prev: prevWhoop.hrv,
+        target: 50,
+        unit: 'ms',
+        higherIsBetter: true
+      },
+      {
+        label: 'Avg Recovery',
+        actual: data.whoop.averages.recovery,
+        prev: prevWhoop.recovery,
+        target: 70,
+        unit: '%',
+        higherIsBetter: true
+      },
+      {
+        label: 'Avg RHR',
+        actual: data.whoop.averages.rhr,
+        prev: prevWhoop.rhr,
+        target: 60,
+        unit: 'bpm',
+        higherIsBetter: false // Lower RHR = better fitness
+      }
     ];
 
     avgItems.forEach(item => {
+      // Calculate trend if previous data exists
+      let trendHtml = '';
+      if (item.prev !== undefined && item.prev !== null && item.higherIsBetter !== null) {
+        const trend = getTrendIndicator(item.actual, item.prev, item.higherIsBetter);
+        if (trend.icon) {
+          trendHtml = `<span class="trend-indicator ${trend.class}" title="vs last week: ${item.prev}${item.unit}">${trend.icon}</span>`;
+        }
+      }
+
+      const targetDisplay = typeof item.target === 'number'
+        ? `${item.target}${item.unit}${item.unit === 'ms' ? '+' : ''}`
+        : item.target;
+
       averagesGrid.innerHTML += `
         <div class="label">${item.label}</div>
-        <div class="value">${item.actual} <span class="target">(${item.target})</span></div>
+        <div class="value">${item.actual}${item.unit}${trendHtml} <span class="target">(${targetDisplay})</span></div>
       `;
     });
 
@@ -1201,12 +1564,16 @@
       </div>
     `;
 
-    // WHOOP Notes
+    // WHOOP Notes with missing data notice
     const whoopNotes = document.getElementById('whoopNotes');
+    const missingWhoopDays = countMissingWhoopDays(data.whoop?.daily, 7);
+    const missingDataNotice = getMissingDataNotice(missingWhoopDays, 'WHOOP');
+
     whoopNotes.innerHTML = `
       <div class="note-item">
-        <span class="note-value">${data.whoop.interpretation}</span>
+        <span class="note-value">${data.whoop.interpretation || 'No WHOOP interpretation available.'}</span>
       </div>
+      ${missingDataNotice}
     `;
 
     // Well-being Notes
@@ -1269,6 +1636,13 @@
       }
     };
 
+    // Normalize WHOOP data to canonical days (handles sparse data with gaps)
+    const normalizedWhoop = normalizeToCanonicalDays(data.whoop?.daily || [], days);
+    const whoopHrv = extractField(normalizedWhoop, 'hrv');
+    const whoopRhr = extractField(normalizedWhoop, 'rhr');
+    const whoopSleep = extractField(normalizedWhoop, 'sleep');
+    const whoopStrain = extractField(normalizedWhoop, 'strain');
+
     // HRV Chart with baseline band
     chartInstances.hrv = new Chart(document.getElementById('hrvChart'), {
       type: 'line',
@@ -1277,7 +1651,7 @@
         datasets: [
           {
             label: 'Baseline Upper',
-            data: Array(7).fill(60),
+            data: Array(days.length).fill(60),
             borderColor: 'transparent',
             backgroundColor: 'rgba(156, 163, 175, 0.2)',
             fill: '+1',
@@ -1285,7 +1659,7 @@
           },
           {
             label: 'Baseline Lower',
-            data: Array(7).fill(40),
+            data: Array(days.length).fill(40),
             borderColor: 'transparent',
             backgroundColor: 'transparent',
             fill: false,
@@ -1293,14 +1667,15 @@
           },
           {
             label: 'HRV',
-            data: data.whoop.daily.map(d => d.hrv),
+            data: whoopHrv,
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             borderWidth: 2,
             fill: false,
             tension: 0.3,
             pointRadius: 4,
-            pointBackgroundColor: '#3b82f6'
+            pointBackgroundColor: '#3b82f6',
+            spanGaps: false
           }
         ]
       },
@@ -1320,14 +1695,15 @@
         labels: days,
         datasets: [{
           label: 'RHR',
-          data: data.whoop.daily.map(d => d.rhr),
+          data: whoopRhr,
           borderColor: '#ef4444',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           borderWidth: 2,
           fill: true,
           tension: 0.3,
           pointRadius: 4,
-          pointBackgroundColor: '#ef4444'
+          pointBackgroundColor: '#ef4444',
+          spanGaps: false
         }]
       },
       options: {
@@ -1346,7 +1722,7 @@
         labels: days,
         datasets: [{
           label: 'Sleep (hours)',
-          data: data.whoop.daily.map(d => d.sleep),
+          data: whoopSleep,
           backgroundColor: '#8b5cf6',
           borderRadius: 4
         }]
@@ -1385,14 +1761,14 @@
     });
 
     // Strain Chart
-    const totalStrain = data.whoop.daily.reduce((sum, d) => sum + d.strain, 0).toFixed(1);
+    const totalStrain = data.whoop.daily.reduce((sum, d) => sum + (d.strain || 0), 0).toFixed(1);
     chartInstances.strain = new Chart(document.getElementById('strainChart'), {
       type: 'bar',
       data: {
         labels: days,
         datasets: [{
           label: 'Strain',
-          data: data.whoop.daily.map(d => d.strain),
+          data: whoopStrain,
           backgroundColor: '#f97316',
           borderRadius: 4
         }]
@@ -1541,6 +1917,64 @@
       }
     }
 
+    // Check if user is admin
+    function isAdmin() {
+      const session = localStorage.getItem('coachDashboardSession');
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          return parsed.role === 'admin';
+        } catch (e) {}
+      }
+      return false;
+    }
+
+    // Render pending actions for admin users
+    function renderPendingActions() {
+      const container = document.getElementById('pendingActionsContainer');
+      const pendingActions = data._meta?.pending_actions || [];
+
+      // Only show to admin users and if there are pending actions
+      if (!isAdmin() || pendingActions.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      container.innerHTML = pendingActions.map(action => {
+        const isError = action.type === 'error';
+        const cardClass = isError ? 'pending-action-card error' : 'pending-action-card';
+
+        // Icon based on type
+        const icon = action.type === 'missing_data'
+          ? `<svg xmlns="http://www.w3.org/2000/svg" class="pending-action-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" class="pending-action-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>`;
+
+        // Determine action link
+        let actionButton = '';
+        if (action.field === 'weight' || action.field === 'waist') {
+          actionButton = `<a href="admin.html?action=measurements" class="pending-action-btn">Enter Measurements</a>`;
+        } else {
+          actionButton = `<button class="pending-action-btn" onclick="showToast('Run: ${action.action}', 'info')">View Command</button>`;
+        }
+
+        return `
+          <div class="${cardClass}">
+            ${icon}
+            <div class="pending-action-content">
+              <div class="pending-action-title">Missing ${action.field ? action.field.charAt(0).toUpperCase() + action.field.slice(1) : 'Data'}</div>
+              <div class="pending-action-message">${action.message}</div>
+              ${actionButton}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     // ===== WEEK NAVIGATION =====
     function updateWeekNavigation() {
       const weekDate = availableWeeks[currentWeekIndex];
@@ -1583,7 +2017,7 @@
       }
     }
 
-    // Update loadWeek to also update navigation
+    // Update loadWeek to also update navigation and load previous week for comparisons
     const originalLoadWeek = loadWeek;
     async function loadWeek(index) {
       if (index === currentWeekIndex && index === 0 && data.weekOf === availableWeeks[0]) {
@@ -1598,13 +2032,40 @@
         const response = await fetch(`data/weeks/${weekDate}.json`);
         if (response.ok) {
           data = await response.json();
-          days = data.whoop.daily.map(d => d.day);
+          days = getCanonicalDays(data);
+
+          // Load previous week for comparisons (if exists)
+          if (index > 0) {
+            const prevWeekDate = availableWeeks[index - 1];
+            try {
+              const prevResponse = await fetch(`data/weeks/${prevWeekDate}.json`);
+              if (prevResponse.ok) {
+                previousWeekData = await prevResponse.json();
+              } else {
+                previousWeekData = null;
+              }
+            } catch {
+              previousWeekData = null;
+            }
+          } else {
+            previousWeekData = null;
+          }
+
           renderDashboard();
           renderWeekTabs();
           updateWeekNavigation();
+        } else {
+          // HTTP error (404, 500, etc.)
+          console.error('Failed to load week data:', weekDate, response.status);
+          const dateLabel = new Date(weekDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          showToast(`Unable to load data for ${dateLabel}. File not found.`, 'warning');
+          updateWeekNavigation();
         }
       } catch (e) {
-        console.log('Using embedded data for week', weekDate);
+        // Network error or other fetch failure
+        console.error('Failed to load week data:', weekDate, e);
+        const dateLabel = new Date(weekDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        showToast(`Unable to load ${dateLabel} data. Check your connection.`, 'warning');
         updateWeekNavigation();
       }
     }
