@@ -826,6 +826,12 @@
 
     <!-- WHOOP Charts Section -->
     <h3 class="section-title">WHOOP Recovery Metrics</h3>
+
+    <!-- WHOOP Insight Statement Card -->
+    <div class="card insight-card" id="whoopInsightCard" style="margin-bottom: 1rem;">
+      <p id="whoopInsight">Loading WHOOP insight...</p>
+    </div>
+
     <div class="grid">
       <div class="card">
         <h2>HRV (Heart Rate Variability)</h2>
@@ -862,6 +868,12 @@
 
     <!-- Nutrition Charts Section -->
     <h3 class="section-title">Nutrition (MacroFactor)</h3>
+
+    <!-- MacroFactor Insight Statement Card -->
+    <div class="card insight-card" id="nutritionInsightCard" style="margin-bottom: 1rem;">
+      <p id="nutritionInsight">Loading nutrition insight...</p>
+    </div>
+
     <div class="grid">
       <div class="card">
         <h2>Daily Calories</h2>
@@ -891,11 +903,6 @@
       <div class="card">
         <h2>Training Notes</h2>
         <div class="notes-section" id="trainingNotes"></div>
-      </div>
-
-      <div class="card">
-        <h2>WHOOP Interpretation</h2>
-        <div class="notes-section" id="whoopNotes"></div>
       </div>
     </div>
 
@@ -1019,7 +1026,7 @@
   <script>
     // ===== WEEK MANAGEMENT =====
     // Available weeks (add new weeks here as files are created in data/weeks/)
-    const availableWeeks = ['2025-11-23', '2025-11-25'];
+    const availableWeeks = ['2025-11-16', '2025-11-23', '2025-11-25'];
     let currentWeekIndex = 0;
     let chartInstances = {};
     let previousWeekData = null; // Cache for week-over-week comparisons
@@ -1313,7 +1320,8 @@
       document.getElementById('averagesGrid').innerHTML = '';
       document.getElementById('trainingNotes').innerHTML = '';
       document.getElementById('nutritionNotes').innerHTML = '';
-      document.getElementById('whoopNotes').innerHTML = '';
+      document.getElementById('whoopInsight').innerHTML = 'Loading...';
+      document.getElementById('nutritionInsight').innerHTML = 'Loading...';
       document.getElementById('wellbeingNotes').innerHTML = '';
       document.getElementById('winsNotes').innerHTML = '';
       document.getElementById('coachQuestions').innerHTML = '';
@@ -1564,17 +1572,38 @@
       </div>
     `;
 
-    // WHOOP Notes with missing data notice
-    const whoopNotes = document.getElementById('whoopNotes');
+    // WHOOP Insight Card (in WHOOP Recovery section)
     const missingWhoopDays = countMissingWhoopDays(data.whoop?.daily, 7);
-    const missingDataNotice = getMissingDataNotice(missingWhoopDays, 'WHOOP');
+    const missingWhoopNotice = missingWhoopDays > 0
+      ? ` (${missingWhoopDays} day${missingWhoopDays > 1 ? 's' : ''} missing)`
+      : '';
+    const whoopInterpretation = data.whoop?.interpretation || 'No WHOOP interpretation available.';
+    document.getElementById('whoopInsight').innerHTML = `${whoopInterpretation}${missingWhoopNotice}`;
 
-    whoopNotes.innerHTML = `
-      <div class="note-item">
-        <span class="note-value">${data.whoop.interpretation || 'No WHOOP interpretation available.'}</span>
-      </div>
-      ${missingDataNotice}
-    `;
+    // Nutrition Insight Card (in MacroFactor section)
+    const nutritionInsight = generateNutritionInsight();
+    document.getElementById('nutritionInsight').textContent = nutritionInsight;
+
+    // Generate nutrition insight based on data
+    function generateNutritionInsight() {
+      const avg = data.nutrition.averages;
+      const targets = data.nutrition.targets;
+      const calPercent = Math.round((avg.calories / targets.calories) * 100);
+      const protPercent = Math.round((avg.protein / targets.protein) * 100);
+
+      let insight = `Calories at ${calPercent}% of target (${avg.calories} avg vs ${targets.calories} goal). `;
+      insight += `Protein at ${protPercent}% (${avg.protein}g avg vs ${targets.protein}g goal). `;
+
+      if (protPercent < 90) {
+        insight += `Focus: prioritise protein-first meals.`;
+      } else if (calPercent > 110) {
+        insight += `Slightly over target - mindful portions may help.`;
+      } else {
+        insight += `Solid adherence this week!`;
+      }
+
+      return insight;
+    }
 
     // Well-being Notes
     const wellbeingNotes = document.getElementById('wellbeingNotes');
