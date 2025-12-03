@@ -8,7 +8,9 @@
     "test:headed": "playwright test --headed",
     "test:chromium": "playwright test --project=chromium",
     "test:ui": "playwright test --ui",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "insights": "node scripts/generate-insights.mjs",
+    "insights:current": "node scripts/generate-insights.mjs 2025-11-25"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.44",
-    "ai": "^5.0.106"
+    "ai": "^5.0.106",
+    "dotenv": "^17.2.3"
   }
 }

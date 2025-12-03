@@ -2,14 +2,14 @@
   "weekOf": "2025-11-25",
   "measurements": {
     "weight": 114.6,
-    "waist": 97.0,
-    "chest": 117.0,
-    "middle": 117.0,
-    "butt": 114.0,
-    "leg": 66.0,
+    "waist": 97,
+    "chest": 117,
+    "middle": 117,
+    "butt": 114,
+    "leg": 66,
     "steps": 69027,
-    "hips": 114.0,
-    "shoulders": 135.0
+    "hips": 114,
+    "shoulders": 135
   },
   "training": {
     "overall_performance": "",
@@ -131,7 +131,7 @@
     "sleep_metrics": {
       "avg_duration": 5.8,
       "avg_efficiency": 0,
-      "avg_need": 8.0,
+      "avg_need": 8,
       "avg_debt": 0,
       "consistency": 0
     },
@@ -187,5 +187,16 @@
       "nutrition": true,
       "whoop": true
     }
+  },
+  "_ai_context": {
+    "generated_at": "2025-12-03T12:45:47.614Z",
+    "model": "gemini-1.5-pro",
+    "expert_insights": {
+      "nutrition_expert": "Here's my analysis of your nutrition and recovery data:\n\n*   **Key Observations:**\n    *   Calories are slightly above target, but protein intake is consistently below target, especially earlier in the week.\n    *   Significant calorie surplus on Saturday suggests weekend overeating.\n    *   Recovery metrics are suboptimal, with low sleep and HRV, potentially impacting performance.\n*   **Actionable Recommendations:**\n    *   Strategically increase protein intake in earlier meals (Tue-Thu) to hit daily targets. Consider protein shakes or Greek yogurt.\n    *   Plan for Saturday, either pre-track calories or reduce intake throughout the day to accommodate a planned higher-calorie meal.\n    *   Prioritize sleep hygiene to improve recovery. Aim for 7-9 hours nightly.\n*   **Quick Win:** Add a 30g protein shake immediately post-workout to boost daily protein intake and aid recovery.",
+      "recovery___sleep_expert": "Recovery status is suboptimal, with an average of 60%, low HRV (39ms), and insufficient sleep (5.8h). The high average strain (20.3) on the days recorded and missing WHOOP data points suggest potential overtraining or inconsistent monitoring. Elevated RHR (70bpm) further supports this.\n\nFactors impacting recovery likely include high strain, inconsistent sleep patterns, and potential nutritional imbalances (protein target under reached). The large calorie surplus on Saturday (3699 cal) could also be a factor.\n\n**Recommendation:** Implement a 7-day targeted sleep optimization protocol. Prioritize consistent sleep/wake times, aiming for 8+ hours of sleep in a dark, cool environment. Track sleep consistency and subjective feelings of rest to adjust as needed.",
+      "progress___trends_expert": "This week shows promising progress! Weight is down slightly, and protein intake is up. Steps are also up, indicating increased activity. However, recovery metrics (HRV and sleep) have dipped slightly, and calories are still a bit over target. The large calorie intake on Saturday suggests a potential weekend \"spike.\"\n\nTrends suggest you're maintaining weight while increasing activity, which is great for body recomposition. However, the recovery dip warrants attention.\n\n**Adjustment:** Prioritize sleep hygiene to improve recovery. Even small improvements in sleep duration and quality can significantly impact HRV and overall recovery, supporting consistent progress."
+    },
+    "synthesis": "Alright, let's dial this in for a strong week ahead!\n\nHere are your top 3 priorities, ranked by impact:\n\n1.  **Prioritize Sleep:** Implement that 7-day sleep optimization protocol. Consistent sleep is the bedrock for recovery and progress. Aim for 8+ hours in a dark, cool room. Record sleep/wake times and how rested you feel.\n2.  **Boost Early-Week Protein:** Focus on getting at least 30g of protein in each meal, especially Tue-Thu. Add that post-workout shake! This will help you hit your daily target and support recovery.\n3.  **Plan Your Saturday:** Pre-track your calories or reduce intake throughout the day to account for any planned higher-calorie meals. Awareness is half the battle!\n\n**Mindset Cue:** \"I am building a foundation of consistent habits that will lead to lasting results.\"\n\n**Next Session Focus:** We'll review your sleep optimization progress and fine-tune your Saturday nutrition strategy. Let's make it happen!",
+    "summary": "Alright, let's dial this in for a strong week ahead!"
   }
 }
