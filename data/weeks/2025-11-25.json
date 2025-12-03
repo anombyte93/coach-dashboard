@@ -35,7 +35,7 @@
   "whoop": {
     "daily": [
       {
-        "day": "Sun",
+        "day": "Tue",
         "hrv": 60,
         "rhr": 64,
         "sleep": 1.4,
@@ -43,7 +43,7 @@
         "recovery": 15
       },
       {
-        "day": "Mon",
+        "day": "Wed",
         "hrv": 49,
         "rhr": 71,
         "sleep": 7.3,
@@ -51,7 +51,7 @@
         "recovery": 87
       },
       {
-        "day": "Wed",
+        "day": "Thu",
         "hrv": 44,
         "rhr": 72,
         "sleep": 7.6,
@@ -59,7 +59,7 @@
         "recovery": 81
       },
       {
-        "day": "Wed",
+        "day": "Fri",
         "hrv": 47,
         "rhr": 68,
         "sleep": 7.4,
@@ -67,7 +67,7 @@
         "recovery": 87
       },
       {
-        "day": "Fri",
+        "day": "Sat",
         "hrv": 41,
         "rhr": 66,
         "sleep": 5.5,
@@ -75,7 +75,7 @@
         "recovery": 67
       },
       {
-        "day": "Sat",
+        "day": "Sun",
         "hrv": 40,
         "rhr": 74,
         "sleep": 8.2,
@@ -83,7 +83,7 @@
         "recovery": 71
       },
       {
-        "day": "Sat",
+        "day": "Mon",
         "hrv": 28,
         "rhr": 75,
         "sleep": 4.5,

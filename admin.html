@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Coach Dashboard</title>
+  <style>
+    :root {
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      padding: 1rem 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-secondary {
+      background: var(--gray-200);
+      color: var(--gray-800);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    /* Main Layout */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    /* Status Messages */
+    .status-message {
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .status-message.success {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-message.error {
+      display: block;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* Config Display */
+    .config-display {
+      background: var(--gray-50);
+      padding: 1rem;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      color: var(--gray-800);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn-secondary">View Dashboard</a>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="statusMessage" class="status-message"></div>
+
+    <div class="grid">
+      <!-- Nutrition Targets -->
+      <div class="card">
+        <h2>Nutrition Targets</h2>
+        <form id="nutritionForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Daily Calories</label>
+              <input type="number" id="targetCalories" value="2725">
+            </div>
+            <div class="form-group">
+              <label>Protein (g)</label>
+              <input type="number" id="targetProtein" value="195">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Carbs (g)</label>
+              <input type="number" id="targetCarbs" value="314">
+            </div>
+            <div class="form-group">
+              <label>Fat (g)</label>
+              <input type="number" id="targetFat" value="102">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Targets</button>
+        </form>
+      </div>
+
+      <!-- Recovery Thresholds -->
+      <div class="card">
+        <h2>Recovery Thresholds</h2>
+        <form id="thresholdsForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Green (Good) %</label>
+              <input type="number" id="thresholdGreen" value="70" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label>Yellow (Caution) %</label>
+              <input type="number" id="thresholdYellow" value="50" min="0" max="100">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Sleep Target (hours)</label>
+            <input type="number" id="targetSleep" value="8" step="0.5">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Thresholds</button>
+        </form>
+      </div>
+
+      <!-- NTFY Notifications -->
+      <div class="card">
+        <h2>Notification Settings</h2>
+        <form id="ntfyForm">
+          <div class="form-group">
+            <label>NTFY Topic</label>
+            <input type="text" id="ntfyTopic" placeholder="coach-dashboard">
+          </div>
+          <div class="form-group">
+            <label>NTFY Server</label>
+            <input type="text" id="ntfyServer" placeholder="http://localhost:8889">
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="ntfyEnabled"> Enable Notifications
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <h2>Quick Actions</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <button class="btn btn-secondary" onclick="exportConfig()">Export Configuration</button>
+          <button class="btn btn-secondary" onclick="clearAllData()">Clear All Saved Data</button>
+          <a href="index.html" class="btn btn-primary" style="text-align: center;">Open Dashboard</a>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="section-title">Current Configuration</h3>
+    <div class="card">
+      <div class="config-display" id="configDisplay">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    // Auth check - redirect to login if not admin
+    function checkAuth() {
+      const session = localStorage.getItem('coachDashboardSession');
+      if (!session) {
+        window.location.href = 'login.html?redirect=admin';
+        return false;
+      }
+
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed.expiry < Date.now()) {
+          localStorage.removeItem('coachDashboardSession');
+          window.location.href = 'login.html?redirect=admin';
+          return false;
+        }
+        if (parsed.role !== 'admin') {
+          // Not admin, redirect to dashboard
+          window.location.href = 'index.html';
+          return false;
+        }
+        return true;
+      } catch (e) {
+        localStorage.removeItem('coachDashboardSession');
+        window.location.href = 'login.html?redirect=admin';
+        return false;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('coachDashboardSession');
+      window.location.href = 'login.html';
+    }
+
+    // Config management
+    const CONFIG_KEY = 'coachDashboardConfig';
+
+    function getConfig() {
+      const saved = localStorage.getItem(CONFIG_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return {
+        targets: {
+          calories: 2725,
+          protein: 195,
+          carbs: 314,
+          fat: 102,
+          sleep: 8
+        },
+        thresholds: {
+          green: 70,
+          yellow: 50
+        },
+        ntfy: {
+          enabled: false,
+          topic: 'coach-dashboard',
+          server: 'http://localhost:8889'
+        }
+      };
+    }
+
+    function saveConfig(config) {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      updateConfigDisplay();
+      showStatus('Configuration saved!', 'success');
+    }
+
+    function showStatus(message, type) {
+      const el = document.getElementById('statusMessage');
+      el.textContent = message;
+      el.className = 'status-message ' + type;
+      setTimeout(() => {
+        el.className = 'status-message';
+      }, 3000);
+    }
+
+    function updateConfigDisplay() {
+      const config = getConfig();
+      document.getElementById('configDisplay').textContent = JSON.stringify(config, null, 2);
+    }
+
+    function loadConfigToForm() {
+      const config = getConfig();
+
+      // Nutrition
+      document.getElementById('targetCalories').value = config.targets.calories;
+      document.getElementById('targetProtein').value = config.targets.protein;
+      document.getElementById('targetCarbs').value = config.targets.carbs;
+      document.getElementById('targetFat').value = config.targets.fat;
+
+      // Thresholds
+      document.getElementById('thresholdGreen').value = config.thresholds.green;
+      document.getElementById('thresholdYellow').value = config.thresholds.yellow;
+      document.getElementById('targetSleep').value = config.targets.sleep;
+
+      // NTFY
+      document.getElementById('ntfyTopic').value = config.ntfy.topic || '';
+      document.getElementById('ntfyServer').value = config.ntfy.server || '';
+      document.getElementById('ntfyEnabled').checked = config.ntfy.enabled || false;
+    }
+
+    // Form handlers
+    document.getElementById('nutritionForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const config = getConfig();
+      config.targets.calories = parseInt(document.getElementById('targetCalories').value);
+      config.targets.protein = parseInt(document.getElementById('targetProtein').value);
+      config.targets.carbs = parseInt(document.getElementById('targetCarbs').value);
+      config.targets.fat = parseInt(document.getElementById('targetFat').value);
+      saveConfig(config);
+    });
+
+    document.getElementById('thresholdsForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const config = getConfig();
+      config.thresholds.green = parseInt(document.getElementById('thresholdGreen').value);
+      config.thresholds.yellow = parseInt(document.getElementById('thresholdYellow').value);
+      config.targets.sleep = parseFloat(document.getElementById('targetSleep').value);
+      saveConfig(config);
+    });
+
+    document.getElementById('ntfyForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const config = getConfig();
+      config.ntfy.topic = document.getElementById('ntfyTopic').value;
+      config.ntfy.server = document.getElementById('ntfyServer').value;
+      config.ntfy.enabled = document.getElementById('ntfyEnabled').checked;
+      saveConfig(config);
+    });
+
+    function exportConfig() {
+      const config = getConfig();
+      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'coach-dashboard-config.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearAllData() {
+      if (confirm('Are you sure you want to clear all saved data? This cannot be undone.')) {
+        localStorage.removeItem(CONFIG_KEY);
+        loadConfigToForm();
+        updateConfigDisplay();
+        showStatus('All data cleared', 'success');
+      }
+    }
+
+    // Initialize
+    if (checkAuth()) {
+      loadConfigToForm();
+      updateConfigDisplay();
+    }
+  </script>
+</body>
+</html>

@@ -49,7 +49,7 @@
         "day": "Sun",
         "hrv": 60,
         "rhr": 64,
-        "sleep": 22.0,
+        "sleep": 1.4,
         "strain": 13.8,
         "recovery": 15
       },
@@ -57,15 +57,15 @@
         "day": "Mon",
         "hrv": 49,
         "rhr": 71,
-        "sleep": 83.0,
+        "sleep": 7.3,
         "strain": 11.7,
         "recovery": 87
       },
       {
-        "day": "Wed",
+        "day": "Tue",
         "hrv": 44,
         "rhr": 72,
-        "sleep": 77.0,
+        "sleep": 7.6,
         "strain": 13.4,
         "recovery": 81
       },
@@ -73,23 +73,23 @@
         "day": "Wed",
         "hrv": 47,
         "rhr": 68,
-        "sleep": 80.0,
+        "sleep": 7.4,
         "strain": 15.0,
         "recovery": 87
       },
       {
-        "day": "Fri",
+        "day": "Thu",
         "hrv": 41,
         "rhr": 66,
-        "sleep": 71.0,
+        "sleep": 5.5,
         "strain": 16.4,
         "recovery": 67
       },
       {
-        "day": "Sat",
+        "day": "Fri",
         "hrv": 40,
         "rhr": 74,
-        "sleep": 78.0,
+        "sleep": 8.2,
         "strain": 0.0,
         "recovery": 71
       },
@@ -97,7 +97,7 @@
         "day": "Sat",
         "hrv": 28,
         "rhr": 75,
-        "sleep": 47.0,
+        "sleep": 4.5,
         "strain": 16.2,
         "recovery": 27
       }
@@ -105,7 +105,7 @@
     "averages": {
       "hrv": 44,
       "rhr": 70,
-      "sleep": 65.4,
+      "sleep": 6.0,
       "strain": 12.4,
       "recovery": 62
     },
