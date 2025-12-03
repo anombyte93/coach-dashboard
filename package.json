@@ -16,5 +16,9 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.57.0"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^2.0.44",
+    "ai": "^5.0.106"
   }
 }

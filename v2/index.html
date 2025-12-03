@@ -155,6 +155,23 @@
       border-color: var(--blue);
     }
 
+    .week-tab.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .week-tab.disabled:hover {
+      border-color: var(--gray-200);
+      color: var(--gray-600);
+    }
+
+    .week-tab.future {
+      background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+      font-style: italic;
+    }
+
     /* CSV Helper Modal */
     .modal-overlay {
       display: none;
@@ -766,10 +783,35 @@
 
   <script>
     // ===== WEEK MANAGEMENT =====
-    // Available weeks (add new weeks here as files are created in data/weeks/)
-    const availableWeeks = ['2025-11-16'];
+    // Week configuration - weeks run Sunday to Saturday
+    // Files are named by the Sunday start date of the week
+    const WEEK_CONFIG = {
+      // All possible weeks to display (Sunday dates)
+      allWeeks: ['2025-11-16', '2025-11-23', '2025-11-30', '2025-12-07'],
+      // Weeks that have data files
+      availableWeeks: ['2025-11-16', '2025-11-23']
+    };
     let currentWeekIndex = 0;
     let chartInstances = {};
+
+    // Helper: Calculate days until a week starts
+    function getDaysUntil(weekDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(weekDate);
+      const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+      return diff;
+    }
+
+    // Helper: Check if a week is in the future
+    function isFutureWeek(weekDate) {
+      return getDaysUntil(weekDate) > 0;
+    }
+
+    // Helper: Check if week has data
+    function hasWeekData(weekDate) {
+      return WEEK_CONFIG.availableWeeks.includes(weekDate);
+    }
 
     // Load embedded JSON data (fallback/default)
     let data = JSON.parse(document.getElementById('dashboardData').textContent);
@@ -890,22 +932,49 @@
       const tabsContainer = document.getElementById('weekTabs');
       tabsContainer.innerHTML = '';
 
-      availableWeeks.forEach((weekDate, index) => {
+      const currentWeekDate = WEEK_CONFIG.availableWeeks[currentWeekIndex];
+
+      WEEK_CONFIG.allWeeks.forEach((weekDate) => {
         const date = new Date(weekDate);
         const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const tab = document.createElement('button');
-        tab.className = 'week-tab' + (index === currentWeekIndex ? ' active' : '');
-        tab.textContent = 'Week of ' + label;
-        tab.onclick = () => loadWeek(index);
+
+        const isActive = weekDate === currentWeekDate;
+        const hasData = hasWeekData(weekDate);
+        const isFuture = isFutureWeek(weekDate);
+        const daysUntil = getDaysUntil(weekDate);
+
+        // Build class list
+        let classes = ['week-tab'];
+        if (isActive) classes.push('active');
+        if (!hasData || isFuture) classes.push('disabled');
+        if (isFuture) classes.push('future');
+        tab.className = classes.join(' ');
+
+        // Set label based on state
+        if (isFuture) {
+          tab.textContent = `${label} (${daysUntil}d)`;
+          tab.disabled = true;
+          tab.title = `Available in ${daysUntil} days`;
+        } else if (!hasData) {
+          tab.textContent = `${label} (no data)`;
+          tab.disabled = true;
+          tab.title = 'No data available for this week';
+        } else {
+          tab.textContent = `Week of ${label}`;
+          tab.onclick = () => loadWeek(WEEK_CONFIG.availableWeeks.indexOf(weekDate));
+        }
+
         tabsContainer.appendChild(tab);
       });
     }
 
     async function loadWeek(index) {
-      if (index === currentWeekIndex && index === 0) return; // Already loaded from embedded data
+      if (index === currentWeekIndex) return; // Already loaded
+      if (index < 0 || index >= WEEK_CONFIG.availableWeeks.length) return;
 
       currentWeekIndex = index;
-      const weekDate = availableWeeks[index];
+      const weekDate = WEEK_CONFIG.availableWeeks[index];
 
       try {
         // Try to load from data/weeks/ directory
