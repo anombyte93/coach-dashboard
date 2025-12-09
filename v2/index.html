@@ -1601,7 +1601,7 @@
     window.currentWeekData = data;
   </script>
 
-  <!-- Chat Widget -->
+  <!-- Chat Widget (disabled on GitHub Pages - requires backend server) -->
   <style>
     .chat-widget {
       position: fixed;
@@ -1609,6 +1609,8 @@
       right: 20px;
       z-index: 1000;
       font-family: system-ui, -apple-system, sans-serif;
+      /* Disabled: requires backend server for AI API calls */
+      display: none !important;
     }
 
     .chat-toggle {
