@@ -755,27 +755,27 @@
   },
   "nutrition": {
     "daily": [
-      { "day": "Mon", "calories": 3200, "protein": 165, "carbs": 340, "fat": 180 },
-      { "day": "Tue", "calories": 3500, "protein": 175, "carbs": 370, "fat": 195 },
-      { "day": "Wed", "calories": 3400, "protein": 170, "carbs": 355, "fat": 188 },
-      { "day": "Thu", "calories": 3600, "protein": 180, "carbs": 380, "fat": 200 },
-      { "day": "Fri", "calories": 3300, "protein": 168, "carbs": 345, "fat": 182 },
-      { "day": "Sat", "calories": 3550, "protein": 175, "carbs": 375, "fat": 195 },
-      { "day": "Sun", "calories": 3580, "protein": 171, "carbs": 355, "fat": 190 }
+      { "day": "Sun", "date": "2025-11-30", "calories": 2305, "protein": 176, "carbs": 225, "fat": 83, "steps": 14142 },
+      { "day": "Mon", "date": "2025-12-01", "calories": 2778, "protein": 234, "carbs": 247, "fat": 114, "steps": 3204 },
+      { "day": "Tue", "date": "2025-12-02", "calories": 2925, "protein": 208, "carbs": 301, "fat": 101, "steps": 2797 },
+      { "day": "Wed", "date": "2025-12-03", "calories": 2750, "protein": 213, "carbs": 263, "fat": 98, "steps": 2786 },
+      { "day": "Thu", "date": "2025-12-04", "calories": 2668, "protein": 248, "carbs": 258, "fat": 70, "steps": 1934 },
+      { "day": "Fri", "date": "2025-12-05", "calories": 3784, "protein": 216, "carbs": 549, "fat": 97, "steps": 3517 },
+      { "day": "Sat", "date": "2025-12-06", "calories": 3704, "protein": 276, "carbs": 443, "fat": 110, "steps": 9235 }
     ],
     "averages": {
-      "calories": 3447,
-      "protein": 172,
-      "carbs": 360,
-      "fat": 190
+      "calories": 2988,
+      "protein": 224,
+      "carbs": 327,
+      "fat": 96
     },
     "targets": {
       "calories": 2725,
       "protein": 195,
-      "carbs": 314,
-      "fat": 102
+      "carbs": 295,
+      "fat": 85
     },
-    "notes": "126% of calorie target due to travel + takeaway. Protein improving (88% of target). Fat elevated from convenience foods. Hydration low. Focus: meal prep, protein-first, 3L+ water daily."
+    "notes": "110% of calorie target (2988 avg). Protein at 115% (224g avg). Steps: 37,615 total. Note: 30-45 min warm-up needed for deadlifts including mobility work."
   },
   "whoop": {
     "daily": [
@@ -860,7 +860,10 @@
 
     // Load embedded JSON data (fallback/default)
     let data = JSON.parse(document.getElementById('dashboardData').textContent);
-    let days = data.whoop.daily.map(d => d.day);
+    // Use WHOOP days if available, otherwise fall back to nutrition days
+    let days = (data.whoop.daily && data.whoop.daily.length > 0)
+      ? data.whoop.daily.map(d => d.day)
+      : data.nutrition.daily.map(d => d.day);
 
     // ===== PDF EXPORT =====
     function exportPDF() {
@@ -1026,7 +1029,10 @@
         const response = await fetch(`data/weeks/${weekDate}.json`);
         if (response.ok) {
           data = await response.json();
-          days = data.whoop.daily.map(d => d.day);
+          // Use WHOOP days if available, otherwise fall back to nutrition days
+          days = (data.whoop.daily && data.whoop.daily.length > 0)
+            ? data.whoop.daily.map(d => d.day)
+            : data.nutrition.daily.map(d => d.day);
           renderDashboard();
           renderWeekTabs();
         }
