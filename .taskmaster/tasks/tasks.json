@@ -1,0 +1,738 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Dynamic Week Discovery",
+      "description": "Replace hardcoded week array with auto-detection of available weeks from data/weeks/*.json files",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Implement `discoverAvailableWeeks()` function that:\n1. Scans data/weeks/ directory for JSON files\n2. Uses parallel fetch with error handling\n3. Returns array of week date strings (YYYY-MM-DD format)\n4. Validates JSON structure before adding to tabs\n5. Handles missing weeks gracefully\n\nTechnical Implementation:\n- Language: JavaScript (vanilla)\n- Lines of code: ~30\n- Dependencies: Fetch API\n- Key operations: Parallel fetch with Promise.all\n\nCode Example:\n```javascript\nasync function discoverAvailableWeeks() {\n  const weeks = [];\n  const testWeeks = generateWeekRange('2025-11-01', '2025-12-31');\n  \n  await Promise.all(testWeeks.map(async (week) => {\n    try {\n      const response = await fetch(`data/weeks/${week}.json`);\n      if (response.ok) {\n        const data = await response.json();\n        if (data && data.weekStart) weeks.push(week);\n      }\n    } catch (e) { /* silent fail */ }\n  }));\n  \n  return weeks.sort();\n}\n```",
+      "testStrategy": "Acceptance Criteria (AC1.1):\n- [ ] All 6 available weeks appear in tabs automatically\n- [ ] New weeks appear without code changes (add test file 2025-12-01.json and verify tab appears)\n- [ ] Graceful handling of missing weeks (verify no console errors when week not found)\n\nTest Method:\n1. Load dashboard and count week tabs (should be 6, not 2)\n2. Add new week JSON file to data/weeks/\n3. Refresh dashboard (new tab should appear)\n4. Remove a week file (tab should disappear without errors)"
+    },
+    {
+      "id": 2,
+      "title": "Readiness Status Indicator",
+      "description": "Add single badge showing training readiness (Ready/Caution/Limited) above charts",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement `calculateReadiness()` function and badge component:\n\nReadiness Algorithm (weighted average):\n- HRV: 30% weight (>baseline = good)\n- RHR: 20% weight (<baseline = good)\n- Sleep: 30% weight (>7hrs = good)\n- Recovery: 20% weight (>75% = good)\n\nStatus Thresholds:\n- Ready: score >0.75 (green circle, text 'Ready')\n- Caution: score 0.5-0.75 (yellow triangle, text 'Caution')\n- Limited: score <0.5 (red square, text 'Limited')\n\nCode Example:\n```javascript\nfunction calculateReadiness(weekData) {\n  const hrv = weekData.whoop.hrv_avg / weekData.whoop.hrv_baseline;\n  const rhr = weekData.whoop.rhr_baseline / weekData.whoop.rhr_avg;\n  const sleep = weekData.whoop.sleep_avg / (7 * 60); // 7 hours target\n  const recovery = weekData.whoop.recovery_avg / 100;\n  \n  const score = (hrv * 0.3) + (rhr * 0.2) + (sleep * 0.3) + (recovery * 0.2);\n  \n  if (score > 0.75) return { status: 'ready', score, label: 'Ready', icon: '●' };\n  if (score > 0.5) return { status: 'caution', score, label: 'Caution', icon: '▲' };\n  return { status: 'limited', score, label: 'Limited', icon: '■' };\n}\n```\n\nBadge HTML:\n```html\n<div class=\"readiness-badge\" data-status=\"ready\">\n  <span class=\"icon\">●</span>\n  <span class=\"label\">Ready</span>\n  <span class=\"score\">85%</span>\n</div>\n```",
+      "testStrategy": "Acceptance Criteria (AC1.2):\n- [ ] Badge visible above charts\n- [ ] Color + icon + text (redundant encodings)\n- [ ] Updates on week change\n\nTest Method:\n1. Load dashboard with high recovery week (should show green 'Ready')\n2. Switch to low recovery week (should update to yellow/red)\n3. Verify icon, text, and color all present\n4. Target: <10 seconds to determine readiness (down from ~60s)"
+    },
+    {
+      "id": 3,
+      "title": "Color-Blind Safe Palette",
+      "description": "Replace red/green colors with blue/orange palette for colorblind accessibility",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Update CSS color variables and add redundant encodings:\n\nColor Palette Changes:\n- Red → Blue (#2563EB) for good/recovered\n- Green → Orange (#F59E0B) for poor/caution\n- Keep gray for neutral\n\nRedundant Encodings:\n- Color + Icon + Text for all statuses\n- Patterns/textures for charts (dashed/dotted lines)\n\nCSS Updates:\n```css\n:root {\n  /* Color-blind safe palette */\n  --status-good: #2563EB;    /* Blue - was red */\n  --status-warning: #F59E0B; /* Orange - was yellow */\n  --status-poor: #DC2626;    /* Red - was green */\n  \n  /* Focus states (3:1 contrast) */\n  --focus-ring: 2px solid #2563EB;\n  --focus-offset: 2px;\n}\n\n.status-good::before { content: '●'; color: var(--status-good); }\n.status-warning::before { content: '▲'; color: var(--status-warning); }\n.status-poor::before { content: '■'; color: var(--status-poor); }\n```\n\nChart.js Dataset Patterns:\n```javascript\nborderDash: [5, 5],  // dashed for previous week\nborderDash: [1, 3],  // dotted for baseline\n```",
+      "testStrategy": "Acceptance Criteria (AC1.3):\n- [ ] Pass colorblind simulator tests (Coblis tool)\n- [ ] All statuses have icon + text + color\n\nTest Method:\n1. Run dashboard through Coblis simulator (deuteranopia, protanopia, tritanopia)\n2. Verify statuses distinguishable in all modes\n3. Check WCAG contrast ratios >4.5:1 for text\n4. Confirm icons render correctly in all browsers"
+    },
+    {
+      "id": 4,
+      "title": "Coach Prep Section Activation",
+      "description": "Enable existing coach prep data in UI (blockers, velocity, topics, questions)",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Activate v2 coach prep section that exists in HTML but is disabled:\n\n1. Uncomment coach prep HTML section\n2. Populate from weekData.coachPrep JSON field\n3. Display:\n   - Blockers (red flags)\n   - Velocity trend (improving/declining)\n   - Discussion topics\n   - Client questions\n\nJSON Structure:\n```json\n{\n  \"coachPrep\": {\n    \"blockers\": [\"Low HRV 3 days\", \"Sleep debt 2hrs\"],\n    \"velocity\": \"declining\",\n    \"topics\": [\"Deload week?\", \"Nutrition timing\"],\n    \"questions\": [\"How's energy?\", \"Any soreness?\"]\n  }\n}\n```\n\nHTML Template:\n```html\n<section class=\"coach-prep\" id=\"coachPrepSection\">\n  <h3>Session Prep</h3>\n  <div class=\"prep-blockers\">\n    <h4>⚠️ Red Flags</h4>\n    <ul id=\"blockersList\"></ul>\n  </div>\n  <div class=\"prep-topics\">\n    <h4>💬 Discussion Topics</h4>\n    <ul id=\"topicsList\"></ul>\n  </div>\n  <div class=\"prep-questions\">\n    <h4>❓ Client Questions</h4>\n    <ul id=\"questionsList\"></ul>\n  </div>\n</section>\n```\n\nJavaScript:\n```javascript\nfunction renderCoachPrep(weekData) {\n  const prep = weekData.coachPrep;\n  document.getElementById('blockersList').innerHTML = \n    prep.blockers.map(b => `<li>${b}</li>`).join('');\n  // ... similar for topics and questions\n}\n```",
+      "testStrategy": "Acceptance Criteria (AC1.5):\n- [ ] Blockers, velocity, topics visible\n- [ ] Client questions displayed\n\nTest Method:\n1. Load dashboard with week containing coachPrep data\n2. Verify all 4 sections render (blockers, velocity, topics, questions)\n3. Verify data matches JSON source\n4. Test with missing coachPrep field (should not crash)"
+    },
+    {
+      "id": 5,
+      "title": "Keyboard Focus States",
+      "description": "Add visible 2px focus rings with 3:1 contrast on all interactive elements",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Add CSS focus styles for keyboard navigation:\n\nFocus Ring Specification:\n- Width: 2px\n- Color: #2563EB (blue)\n- Offset: 2px\n- Contrast ratio: 3:1 minimum (WCAG AA)\n\nCSS Implementation:\n```css\n/* Focus states for all interactive elements */\nbutton:focus-visible,\na:focus-visible,\n.tab:focus-visible,\ninput:focus-visible,\nselect:focus-visible {\n  outline: 2px solid var(--status-good);\n  outline-offset: 2px;\n  border-radius: 2px;\n}\n\n/* Remove default outline */\n*:focus {\n  outline: none;\n}\n\n/* Only show on keyboard focus */\n*:focus-visible {\n  outline: 2px solid var(--status-good);\n  outline-offset: 2px;\n}\n```\n\nTab Order:\n1. Week tabs (left to right)\n2. Readiness badge\n3. Chart toggles\n4. Session prep panel\n5. Export/print buttons",
+      "testStrategy": "Acceptance Criteria (AC1.4):\n- [ ] 2px focus ring on buttons, tabs, links\n- [ ] Tab navigation works logically\n\nTest Method:\n1. Press Tab from page load (should start at first week tab)\n2. Verify visible blue ring on each focused element\n3. Check tab order matches visual hierarchy\n4. Measure contrast ratio (should be >3:1)\n5. Test in Chrome, Firefox, Safari"
+    },
+    {
+      "id": 6,
+      "title": "Week-Over-Week Comparison",
+      "description": "Add toggle to overlay previous week data on charts as dashed gray line",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement comparison mode for all charts:\n\n1. Add 'Compare' toggle button per chart\n2. Fetch previous week data (week - 7 days)\n3. Overlay as dashed gray dataset\n4. Update legend\n\nChart.js Implementation:\n```javascript\nfunction toggleComparison(chartId, enable) {\n  const chart = Chart.getChart(chartId);\n  const currentWeek = getCurrentWeek();\n  const previousWeek = getPreviousWeek(currentWeek);\n  \n  if (enable) {\n    fetch(`data/weeks/${previousWeek}.json`)\n      .then(res => res.json())\n      .then(prevData => {\n        chart.data.datasets.push({\n          label: `Previous Week (${previousWeek})`,\n          data: extractChartData(prevData, chartId),\n          borderColor: '#9CA3AF',\n          borderDash: [5, 5],\n          borderWidth: 2,\n          pointRadius: 0\n        });\n        chart.update();\n      });\n  } else {\n    // Remove previous week dataset\n    chart.data.datasets = chart.data.datasets.filter(\n      ds => !ds.label.includes('Previous Week')\n    );\n    chart.update();\n  }\n}\n```\n\nHTML Toggle:\n```html\n<button class=\"compare-toggle\" data-chart=\"hrvChart\">\n  <input type=\"checkbox\" id=\"compareHRV\">\n  <label for=\"compareHRV\">Compare</label>\n</button>\n```",
+      "testStrategy": "Acceptance Criteria (AC2.1):\n- [ ] 'Compare' toggle overlays previous week data\n- [ ] Previous week shown as dashed gray line\n\nTest Method:\n1. Click 'Compare' on HRV chart\n2. Verify dashed gray line appears\n3. Verify legend shows both weeks\n4. Toggle off (dashed line should disappear)\n5. Test with first week (no previous week available - should show message)"
+    },
+    {
+      "id": 7,
+      "title": "Delta Indicators",
+      "description": "Show '+5ms vs last week' deltas in card headers with color coding",
+      "status": "pending",
+      "dependencies": [
+        6
+      ],
+      "priority": "high",
+      "details": "Calculate and display week-over-week deltas:\n\nDelta Calculation:\n```javascript\nfunction calculateDelta(current, previous, metric) {\n  const diff = current - previous;\n  const percent = ((diff / previous) * 100).toFixed(1);\n  \n  // Determine if delta is good/bad based on metric\n  const isGood = (metric === 'hrv' || metric === 'sleep') \n    ? diff > 0  // higher is better\n    : diff < 0; // lower is better (RHR)\n  \n  return {\n    value: diff,\n    percent,\n    isGood,\n    display: `${diff > 0 ? '+' : ''}${diff.toFixed(1)} (${percent}%)`\n  };\n}\n```\n\nHTML Display:\n```html\n<div class=\"metric-card\">\n  <h3>HRV</h3>\n  <div class=\"metric-value\">78ms</div>\n  <div class=\"metric-delta\" data-good=\"true\">\n    ▲ +5ms vs last week (+6.8%)\n  </div>\n</div>\n```\n\nCSS Styling:\n```css\n.metric-delta[data-good=\"true\"] {\n  color: var(--status-good);\n}\n.metric-delta[data-good=\"true\"]::before {\n  content: '▲';\n}\n.metric-delta[data-good=\"false\"] {\n  color: var(--status-poor);\n}\n.metric-delta[data-good=\"false\"]::before {\n  content: '▼';\n}\n```",
+      "testStrategy": "Acceptance Criteria (AC2.2):\n- [ ] Deltas visible on key metrics (HRV, RHR, Sleep, Recovery)\n- [ ] Color-coded (green up, red down for recovery)\n\nTest Method:\n1. Load dashboard with 2 consecutive weeks of data\n2. Verify delta appears below each metric\n3. Check color coding (HRV increase = green, RHR increase = red)\n4. Test with missing previous week (should show '–' or 'N/A')"
+    },
+    {
+      "id": 8,
+      "title": "Session Prep Panel",
+      "description": "Build collapsible sidebar with week trend, red flags, wins, and client questions",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "high",
+      "details": "Create sidebar component for session preparation:\n\nPanel Structure:\n1. Week Trend (improving/declining/stable)\n2. Red Flags (blockers list)\n3. Wins (positive highlights)\n4. Client Questions (prepared questions)\n\nHTML Structure:\n```html\n<aside class=\"session-prep-panel\" id=\"sessionPrepPanel\" aria-hidden=\"true\">\n  <button class=\"panel-close\" aria-label=\"Close panel\">×</button>\n  \n  <section class=\"prep-trend\">\n    <h3>Week Trend</h3>\n    <div class=\"trend-indicator\" data-trend=\"improving\">\n      <span class=\"icon\">📈</span>\n      <span class=\"label\">Improving</span>\n    </div>\n  </section>\n  \n  <section class=\"prep-red-flags\">\n    <h3>🚩 Red Flags</h3>\n    <ul id=\"prepRedFlagsList\"></ul>\n  </section>\n  \n  <section class=\"prep-wins\">\n    <h3>🎉 Wins</h3>\n    <ul id=\"prepWinsList\"></ul>\n  </section>\n  \n  <section class=\"prep-questions\">\n    <h3>💬 Discussion Points</h3>\n    <ul id=\"prepQuestionsList\"></ul>\n  </section>\n</aside>\n\n<button class=\"prep-toggle\" aria-label=\"Open session prep panel\">\n  📋 Session Prep\n</button>\n```\n\nCSS Animation:\n```css\n.session-prep-panel {\n  position: fixed;\n  right: -400px;\n  top: 0;\n  width: 400px;\n  height: 100vh;\n  background: white;\n  box-shadow: -2px 0 8px rgba(0,0,0,0.1);\n  transition: right 0.3s ease;\n  z-index: 1000;\n}\n\n.session-prep-panel[aria-hidden=\"false\"] {\n  right: 0;\n}\n```",
+      "testStrategy": "Acceptance Criteria (AC2.3):\n- [ ] Session prep panel opens from button click\n- [ ] Week trend (improving/declining) visible\n- [ ] Red flags list displayed\n- [ ] Wins list displayed\n- [ ] Client questions displayed\n\nTest Method:\n1. Click 'Session Prep' button\n2. Verify panel slides in from right\n3. Check all 4 sections populate\n4. Close panel (should slide out)\n5. Target: <2 minutes to gather session context (down from ~5min)"
+    },
+    {
+      "id": 9,
+      "title": "Baseline Bands on All Charts",
+      "description": "Extend baseline band visualization to RHR, Sleep, and Strain charts (currently only HRV has it)",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Add personal baseline range bands to remaining recovery charts:\n\nBaseline Band Specs:\n- HRV: Already implemented ✓\n- RHR: Personal baseline ± 5 bpm\n- Sleep: 7-9 hours range\n- Strain: Personal average ± 2 points\n\nChart.js Annotation Plugin:\n```javascript\nfunction createBaselineBand(chart, metric, baseline, variance) {\n  const annotation = {\n    type: 'box',\n    yMin: baseline - variance,\n    yMax: baseline + variance,\n    backgroundColor: 'rgba(156, 163, 175, 0.1)',\n    borderColor: 'rgba(156, 163, 175, 0.3)',\n    borderWidth: 1,\n    label: {\n      display: true,\n      content: `${metric} Baseline`,\n      position: 'start'\n    }\n  };\n  \n  if (!chart.options.plugins.annotation) {\n    chart.options.plugins.annotation = { annotations: {} };\n  }\n  chart.options.plugins.annotation.annotations[`${metric}Baseline`] = annotation;\n  chart.update();\n}\n```\n\nBaseline Calculation:\n```javascript\nfunction calculateBaseline(weekData, metric) {\n  switch(metric) {\n    case 'hrv':\n      return { baseline: weekData.whoop.hrv_baseline, variance: 10 };\n    case 'rhr':\n      return { baseline: weekData.whoop.rhr_baseline, variance: 5 };\n    case 'sleep':\n      return { baseline: 8 * 60, variance: 60 }; // 7-9 hours\n    case 'strain':\n      return { baseline: weekData.whoop.strain_avg, variance: 2 };\n  }\n}\n```",
+      "testStrategy": "Acceptance Criteria (AC2.4):\n- [ ] Gray baseline band on all 4 recovery charts (HRV, RHR, Sleep, Strain)\n\nTest Method:\n1. Load dashboard\n2. Verify baseline band visible on HRV chart (already exists)\n3. Verify baseline band visible on RHR chart (new)\n4. Verify baseline band visible on Sleep chart (new)\n5. Verify baseline band visible on Strain chart (new)\n6. Check band opacity allows data visibility"
+    },
+    {
+      "id": 10,
+      "title": "Data Table Alternatives",
+      "description": "Add 'Show Data Table' button per chart that generates accessible HTML tables for screen readers",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "details": "Provide accessible data table alternatives for charts:\n\nTable Generation:\n```javascript\nfunction generateDataTable(chartId) {\n  const chart = Chart.getChart(chartId);\n  const table = document.createElement('table');\n  table.className = 'chart-data-table';\n  table.setAttribute('role', 'table');\n  table.setAttribute('aria-label', `Data for ${chart.options.plugins.title.text}`);\n  \n  // Header\n  const thead = document.createElement('thead');\n  const headerRow = document.createElement('tr');\n  headerRow.innerHTML = `\n    <th scope=\"col\">Date</th>\n    ${chart.data.datasets.map(ds => `<th scope=\"col\">${ds.label}</th>`).join('')}\n  `;\n  thead.appendChild(headerRow);\n  table.appendChild(thead);\n  \n  // Body\n  const tbody = document.createElement('tbody');\n  chart.data.labels.forEach((label, i) => {\n    const row = document.createElement('tr');\n    row.innerHTML = `\n      <th scope=\"row\">${label}</th>\n      ${chart.data.datasets.map(ds => `<td>${ds.data[i]}</td>`).join('')}\n    `;\n    tbody.appendChild(row);\n  });\n  table.appendChild(tbody);\n  \n  return table;\n}\n```\n\nHTML Toggle:\n```html\n<button class=\"show-data-table\" aria-label=\"Show data table for HRV chart\">\n  📊 Show Data Table\n</button>\n<div class=\"data-table-container\" hidden></div>\n```\n\nAccessibility Features:\n- `<th scope=\"col\">` for headers\n- `<th scope=\"row\">` for row labels\n- `aria-label` on table\n- `role=\"table\"` explicit role",
+      "testStrategy": "Acceptance Criteria (AC3.1):\n- [ ] 'Show Data Table' button generates accessible table\n- [ ] Tables screen reader accessible\n\nTest Method:\n1. Click 'Show Data Table' on HRV chart\n2. Verify HTML table appears below chart\n3. Test with NVDA screen reader (should announce row/column headers)\n4. Run axe DevTools audit (should pass)\n5. Toggle off (table should hide)"
+    },
+    {
+      "id": 11,
+      "title": "ARIA Labels and Semantic HTML",
+      "description": "Add aria-label, role attributes, and semantic markup for WCAG AA compliance (target >95 Lighthouse score)",
+      "status": "pending",
+      "dependencies": [
+        10
+      ],
+      "priority": "medium",
+      "details": "Enhance accessibility with semantic HTML and ARIA:\n\nARIA Enhancements:\n```html\n<!-- Charts -->\n<div class=\"chart-container\" role=\"img\" aria-label=\"Heart Rate Variability trend for week of Nov 23\">\n  <canvas id=\"hrvChart\"></canvas>\n  <p class=\"chart-caption\">Shows daily HRV with baseline band</p>\n</div>\n\n<!-- Navigation -->\n<nav aria-label=\"Week navigation\">\n  <button role=\"tab\" aria-selected=\"true\" aria-controls=\"week-2025-11-23\">\n    Nov 23\n  </button>\n</nav>\n\n<!-- Status indicators -->\n<div class=\"readiness-badge\" role=\"status\" aria-live=\"polite\">\n  <span aria-label=\"Training readiness: Ready\">● Ready</span>\n</div>\n\n<!-- Forms -->\n<button aria-label=\"Export dashboard data as JSON\" aria-describedby=\"export-help\">\n  Export\n</button>\n<span id=\"export-help\" class=\"sr-only\">Downloads current week data</span>\n```\n\nSemantic HTML:\n- Replace `<div>` with `<section>`, `<article>`, `<nav>`, `<aside>`\n- Add `<h1>` page title\n- Use `<button>` not `<div onclick>`\n- Add `<label>` for all inputs\n\nLighthouse Checklist:\n- [ ] Alt text on images\n- [ ] Unique page title\n- [ ] Landmark regions\n- [ ] Focus order matches visual order\n- [ ] Color contrast >4.5:1",
+      "testStrategy": "Acceptance Criteria (AC3.2):\n- [ ] Lighthouse accessibility score >95 (current: ~75)\n\nTest Method:\n1. Run Lighthouse audit in Chrome DevTools\n2. Fix all accessibility issues (target: 0 issues)\n3. Test with NVDA/JAWS screen reader\n4. Verify page structure makes sense when read aloud\n5. Check axe DevTools audit (should pass)"
+    },
+    {
+      "id": 12,
+      "title": "Grayscale Print Stylesheet",
+      "description": "Add print-optimized styles using patterns instead of colors for B&W readability",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "medium",
+      "details": "Create print stylesheet with grayscale-safe styles:\n\nPrint CSS:\n```css\n@media print {\n  /* Hide non-essential elements */\n  .prep-toggle,\n  .compare-toggle,\n  nav.week-tabs,\n  button {\n    display: none;\n  }\n  \n  /* Grayscale colors */\n  body {\n    background: white;\n    color: black;\n  }\n  \n  /* Chart patterns instead of colors */\n  .chart-container {\n    page-break-inside: avoid;\n    border: 1px solid #ccc;\n  }\n  \n  /* Text-based status indicators */\n  .readiness-badge[data-status=\"ready\"]::before {\n    content: \"[READY] \";\n    font-weight: bold;\n  }\n  .readiness-badge[data-status=\"caution\"]::before {\n    content: \"[CAUTION] \";\n    font-weight: bold;\n  }\n  .readiness-badge[data-status=\"limited\"]::before {\n    content: \"[LIMITED] \";\n    font-weight: bold;\n  }\n  \n  /* Page breaks */\n  .chart-grid {\n    page-break-after: avoid;\n  }\n  \n  h2 {\n    page-break-after: avoid;\n  }\n}\n```\n\nChart.js Print Config:\n```javascript\n// Convert chart colors to patterns for print\nwindow.addEventListener('beforeprint', () => {\n  Chart.instances.forEach(chart => {\n    chart.data.datasets.forEach((ds, i) => {\n      ds._printBackup = { ...ds };\n      ds.borderColor = '#000';\n      ds.borderDash = i === 0 ? [] : [5, 5];\n      ds.backgroundColor = 'transparent';\n    });\n    chart.update();\n  });\n});\n\nwindow.addEventListener('afterprint', () => {\n  // Restore original colors\n  Chart.instances.forEach(chart => {\n    chart.data.datasets.forEach(ds => {\n      Object.assign(ds, ds._printBackup);\n    });\n    chart.update();\n  });\n});\n```",
+      "testStrategy": "Acceptance Criteria (AC3.3):\n- [ ] PDF readable in black & white\n- [ ] Charts distinguishable without color\n\nTest Method:\n1. Print dashboard to PDF\n2. Convert PDF to grayscale\n3. Verify all data readable\n4. Check chart lines distinguishable (solid vs dashed)\n5. Test in Chrome, Firefox, Safari print preview"
+    },
+    {
+      "id": 13,
+      "title": "Print Header and Footer",
+      "description": "Add professional print context with client name, date range in header, page numbers in footer",
+      "status": "pending",
+      "dependencies": [
+        12
+      ],
+      "priority": "medium",
+      "details": "Add print-only header/footer elements:\n\nPrint Header:\n```html\n<header class=\"print-header\">\n  <div class=\"header-left\">\n    <h1>Training Report</h1>\n    <p class=\"client-name\">Hayden</p>\n  </div>\n  <div class=\"header-right\">\n    <p class=\"date-range\">Week of Nov 23, 2025</p>\n    <p class=\"generated-date\">Generated: Dec 3, 2025</p>\n  </div>\n</header>\n```\n\nPrint Footer:\n```html\n<footer class=\"print-footer\">\n  <p>Page <span class=\"page-number\"></span> of <span class=\"page-count\"></span></p>\n  <p class=\"confidential\">Confidential - For Coach Use Only</p>\n</footer>\n```\n\nPrint CSS:\n```css\n@media screen {\n  .print-header,\n  .print-footer {\n    display: none;\n  }\n}\n\n@media print {\n  .print-header {\n    display: flex;\n    justify-content: space-between;\n    border-bottom: 2px solid #000;\n    padding-bottom: 10px;\n    margin-bottom: 20px;\n  }\n  \n  .print-footer {\n    position: fixed;\n    bottom: 0;\n    width: 100%;\n    border-top: 1px solid #ccc;\n    padding-top: 5px;\n    font-size: 10pt;\n    text-align: center;\n  }\n  \n  /* CSS Paged Media (page numbers) */\n  @page {\n    margin: 1in;\n    @bottom-center {\n      content: \"Page \" counter(page) \" of \" counter(pages);\n    }\n  }\n}\n```\n\nJavaScript:\n```javascript\nfunction setupPrintContext() {\n  const weekStart = document.querySelector('.active-tab').textContent;\n  document.querySelector('.print-header .date-range').textContent = \n    `Week of ${weekStart}`;\n  document.querySelector('.print-header .generated-date').textContent = \n    `Generated: ${new Date().toLocaleDateString()}`;\n}\n\nwindow.addEventListener('beforeprint', setupPrintContext);\n```",
+      "testStrategy": "Acceptance Criteria (AC3.4):\n- [ ] Print includes client name and date range\n- [ ] Page numbers in footer\n\nTest Method:\n1. Print dashboard to PDF\n2. Verify header shows 'Hayden' and 'Week of Nov 23'\n3. Verify footer shows page numbers\n4. Check professional appearance\n5. Test multi-page print (if >1 page)"
+    },
+    {
+      "id": 14,
+      "title": "Mobile Bottom Navigation",
+      "description": "Add thumb-zone action bar on mobile (<768px) with Export, Import, Prep buttons",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "medium",
+      "details": "Implement mobile-first bottom navigation:\n\nHTML Structure:\n```html\n<nav class=\"mobile-bottom-nav\" aria-label=\"Mobile actions\">\n  <button class=\"nav-item\" data-action=\"summary\">\n    <span class=\"icon\">📊</span>\n    <span class=\"label\">Summary</span>\n  </button>\n  <button class=\"nav-item\" data-action=\"recovery\">\n    <span class=\"icon\">💤</span>\n    <span class=\"label\">Recovery</span>\n  </button>\n  <button class=\"nav-item\" data-action=\"nutrition\">\n    <span class=\"icon\">🍎</span>\n    <span class=\"label\">Nutrition</span>\n  </button>\n  <button class=\"nav-item\" data-action=\"prep\">\n    <span class=\"icon\">📋</span>\n    <span class=\"label\">Prep</span>\n  </button>\n</nav>\n```\n\nCSS:\n```css\n.mobile-bottom-nav {\n  display: none;\n}\n\n@media (max-width: 768px) {\n  .mobile-bottom-nav {\n    display: flex;\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    width: 100%;\n    height: 60px;\n    background: white;\n    border-top: 1px solid #e5e7eb;\n    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);\n    z-index: 100;\n  }\n  \n  .nav-item {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    background: transparent;\n    font-size: 12px;\n  }\n  \n  .nav-item .icon {\n    font-size: 24px;\n    margin-bottom: 4px;\n  }\n  \n  /* Add padding to body to prevent content behind nav */\n  body {\n    padding-bottom: 70px;\n  }\n}\n```\n\nThumb Zone Optimization:\n- 44px minimum touch target (iOS HIG)\n- Bottom 25% of screen (easiest reach)\n- Visual feedback on tap",
+      "testStrategy": "Acceptance Criteria (AC4.1):\n- [ ] Bottom nav visible on viewports <768px\n- [ ] Export, Import, Prep in thumb reach\n\nTest Method:\n1. Open dashboard on mobile device or Chrome DevTools mobile emulator\n2. Verify bottom nav appears at <768px width\n3. Tap each button (should have visual feedback)\n4. Verify 44px touch targets\n5. Test on iOS Safari and Android Chrome"
+    },
+    {
+      "id": 15,
+      "title": "Swipe Gestures for Week Navigation",
+      "description": "Add touch event listeners to swipe left/right for week changes on mobile",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Implement swipe gesture navigation:\n\nTouch Event Handler:\n```javascript\nclass SwipeHandler {\n  constructor(element, callbacks) {\n    this.element = element;\n    this.callbacks = callbacks;\n    this.touchStartX = 0;\n    this.touchEndX = 0;\n    this.minSwipeDistance = 50;\n    \n    element.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: true });\n    element.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: true });\n  }\n  \n  handleTouchStart(e) {\n    this.touchStartX = e.changedTouches[0].screenX;\n  }\n  \n  handleTouchEnd(e) {\n    this.touchEndX = e.changedTouches[0].screenX;\n    this.handleSwipe();\n  }\n  \n  handleSwipe() {\n    const distance = this.touchEndX - this.touchStartX;\n    \n    if (Math.abs(distance) < this.minSwipeDistance) return;\n    \n    if (distance > 0) {\n      // Swipe right (previous week)\n      this.callbacks.onSwipeRight?.();\n    } else {\n      // Swipe left (next week)\n      this.callbacks.onSwipeLeft?.();\n    }\n  }\n}\n\n// Usage\nconst swipeHandler = new SwipeHandler(document.querySelector('.dashboard'), {\n  onSwipeLeft: () => changeWeek(1),  // next week\n  onSwipeRight: () => changeWeek(-1) // previous week\n});\n```\n\nVisual Feedback:\n```css\n.dashboard {\n  touch-action: pan-y; /* Allow vertical scroll, prevent horizontal */\n  user-select: none;\n}\n\n/* Swipe indicator (optional) */\n.swipe-indicator {\n  position: fixed;\n  top: 50%;\n  opacity: 0;\n  transition: opacity 0.2s;\n}\n\n.swipe-indicator.active {\n  opacity: 1;\n}\n```",
+      "testStrategy": "Acceptance Criteria (AC4.2):\n- [ ] Swipe left/right changes weeks\n- [ ] Works on touch devices\n\nTest Method:\n1. Open dashboard on iOS device\n2. Swipe left (should advance to next week)\n3. Swipe right (should go to previous week)\n4. Verify minimum swipe distance (50px)\n5. Test on Android device\n6. Verify no conflict with page scroll"
+    },
+    {
+      "id": 16,
+      "title": "Keyboard Shortcuts",
+      "description": "Add arrow keys for week navigation, Ctrl+P for print, Escape for panel close",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "medium",
+      "details": "Implement keyboard shortcuts:\n\nShortcut Mapping:\n- `←` Left Arrow: Previous week\n- `→` Right Arrow: Next week\n- `Ctrl+P`: Print dashboard\n- `Esc`: Close session prep panel\n- `?`: Show keyboard shortcuts help\n\nKeyboard Handler:\n```javascript\ndocument.addEventListener('keydown', (e) => {\n  // Ignore if typing in input\n  if (e.target.matches('input, textarea')) return;\n  \n  switch(e.key) {\n    case 'ArrowLeft':\n      e.preventDefault();\n      changeWeek(-1); // previous\n      break;\n    \n    case 'ArrowRight':\n      e.preventDefault();\n      changeWeek(1); // next\n      break;\n    \n    case 'Escape':\n      const panel = document.getElementById('sessionPrepPanel');\n      if (panel.getAttribute('aria-hidden') === 'false') {\n        closeSessionPrepPanel();\n      }\n      break;\n    \n    case '?':\n      if (e.shiftKey) {\n        showKeyboardShortcutsHelp();\n      }\n      break;\n    \n    case 'p':\n      if (e.ctrlKey || e.metaKey) {\n        e.preventDefault();\n        window.print();\n      }\n      break;\n  }\n});\n```\n\nHelp Modal:\n```html\n<dialog id=\"keyboardShortcutsDialog\">\n  <h2>Keyboard Shortcuts</h2>\n  <table>\n    <tr><td>← →</td><td>Navigate weeks</td></tr>\n    <tr><td>Ctrl+P</td><td>Print dashboard</td></tr>\n    <tr><td>Esc</td><td>Close panel</td></tr>\n    <tr><td>?</td><td>Show this help</td></tr>\n  </table>\n  <button autofocus>Close</button>\n</dialog>\n```",
+      "testStrategy": "Acceptance Criteria (AC4.3):\n- [ ] Arrow keys navigate weeks\n- [ ] Shortcuts work without conflicts\n\nTest Method:\n1. Load dashboard\n2. Press Right Arrow (should advance week)\n3. Press Left Arrow (should go back)\n4. Press Ctrl+P (should open print dialog)\n5. Open session prep panel, press Escape (should close)\n6. Press Shift+? (should show help modal)\n7. Test on macOS (Cmd+P) and Windows (Ctrl+P)"
+    },
+    {
+      "id": 17,
+      "title": "Small Multiples Correlation View",
+      "description": "Add toggle for stacked mini-charts showing HRV, RHR, Sleep, Strain aligned vertically for correlation analysis",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "low",
+      "details": "Implement small multiples visualization pattern:\n\nLayout Toggle:\n```html\n<button class=\"view-toggle\" data-view=\"grid\" aria-label=\"Switch to small multiples view\">\n  <span class=\"icon\">📊</span>\n  <span class=\"label\">Small Multiples</span>\n</button>\n```\n\nSmall Multiples Layout:\n```css\n.chart-grid.small-multiples {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n\n.chart-grid.small-multiples .chart-container {\n  height: 150px;\n  width: 100%;\n}\n\n.chart-grid.small-multiples canvas {\n  height: 150px !important;\n}\n```\n\nChart.js Config:\n```javascript\nfunction convertToSmallMultiples(chartIds) {\n  chartIds.forEach(id => {\n    const chart = Chart.getChart(id);\n    chart.options.plugins.legend.display = false;\n    chart.options.scales.x.ticks.maxTicksLimit = 7;\n    chart.options.maintainAspectRatio = false;\n    chart.resize(chart.canvas.parentElement.clientWidth, 150);\n  });\n}\n```\n\nCorrelation Benefits:\n- Aligned x-axes show temporal correlation\n- Vertical stacking shows cause-effect\n- Example: Low sleep → high RHR → low HRV next day",
+      "testStrategy": "Acceptance Criteria (AC5.1):\n- [ ] Toggle shows HRV, RHR, Sleep, Strain aligned\n- [ ] Charts stacked vertically\n- [ ] X-axes aligned for correlation\n\nTest Method:\n1. Click 'Small Multiples' toggle\n2. Verify 4 charts stack vertically\n3. Verify x-axes align (same date labels)\n4. Check readability at 150px height\n5. Toggle back to grid view"
+    },
+    {
+      "id": 18,
+      "title": "Dark Mode Support",
+      "description": "Add dark mode CSS that respects system preference (prefers-color-scheme)",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "low",
+      "details": "Implement system-preference dark mode:\n\nDark Mode CSS:\n```css\n:root {\n  --bg-primary: #ffffff;\n  --bg-secondary: #f9fafb;\n  --text-primary: #111827;\n  --text-secondary: #6b7280;\n  --border-color: #e5e7eb;\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --bg-primary: #111827;\n    --bg-secondary: #1f2937;\n    --text-primary: #f9fafb;\n    --text-secondary: #d1d5db;\n    --border-color: #374151;\n  }\n  \n  /* Chart backgrounds */\n  canvas {\n    filter: invert(0.9) hue-rotate(180deg);\n  }\n}\n```\n\nChart.js Dark Mode:\n```javascript\nfunction applyDarkModeToCharts() {\n  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;\n  \n  Chart.defaults.color = isDark ? '#f9fafb' : '#111827';\n  Chart.defaults.borderColor = isDark ? '#374151' : '#e5e7eb';\n  \n  // Re-render all charts\n  Chart.instances.forEach(chart => chart.update());\n}\n\n// Listen for system preference changes\nwindow.matchMedia('(prefers-color-scheme: dark)')\n  .addEventListener('change', applyDarkModeToCharts);\n```\n\nManual Toggle (optional):\n```html\n<button class=\"theme-toggle\" aria-label=\"Toggle dark mode\">\n  <span class=\"light-icon\">☀️</span>\n  <span class=\"dark-icon\">🌙</span>\n</button>\n```",
+      "testStrategy": "Acceptance Criteria (AC5.2):\n- [ ] Dark mode activates automatically based on system preference\n- [ ] Charts readable in dark mode\n\nTest Method:\n1. Open dashboard with system in light mode\n2. Switch system to dark mode (should auto-update)\n3. Verify all text readable (contrast >4.5:1)\n4. Check chart colors inverted correctly\n5. Test manual toggle (if implemented)"
+    },
+    {
+      "id": 19,
+      "title": "Export Single Chart as PNG",
+      "description": "Add right-click context menu to save individual charts as PNG using Chart.js toBase64Image()",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "low",
+      "details": "Implement chart export functionality:\n\nContext Menu:\n```html\n<div class=\"chart-context-menu\" id=\"chartContextMenu\" hidden>\n  <button data-action=\"export-png\">Export as PNG</button>\n  <button data-action=\"export-svg\">Export as SVG</button>\n  <button data-action=\"copy-data\">Copy Data</button>\n</div>\n```\n\nExport Handler:\n```javascript\nfunction exportChartAsPNG(chartId) {\n  const chart = Chart.getChart(chartId);\n  const url = chart.toBase64Image();\n  \n  const link = document.createElement('a');\n  link.download = `${chartId}-${new Date().toISOString().split('T')[0]}.png`;\n  link.href = url;\n  link.click();\n}\n\n// Right-click handler\ndocument.querySelectorAll('.chart-container').forEach(container => {\n  container.addEventListener('contextmenu', (e) => {\n    e.preventDefault();\n    \n    const menu = document.getElementById('chartContextMenu');\n    menu.style.left = `${e.pageX}px`;\n    menu.style.top = `${e.pageY}px`;\n    menu.hidden = false;\n    menu.dataset.chartId = container.querySelector('canvas').id;\n  });\n});\n\n// Export button click\ndocument.querySelector('[data-action=\"export-png\"]').addEventListener('click', () => {\n  const menu = document.getElementById('chartContextMenu');\n  exportChartAsPNG(menu.dataset.chartId);\n  menu.hidden = true;\n});\n```\n\nExport Button (alternative to right-click):\n```html\n<button class=\"chart-export\" aria-label=\"Export HRV chart as PNG\">\n  💾 Export\n</button>\n```",
+      "testStrategy": "Acceptance Criteria (AC5.3):\n- [ ] Each chart exportable as PNG\n- [ ] Right-click shows export menu\n\nTest Method:\n1. Right-click on HRV chart\n2. Select 'Export as PNG'\n3. Verify PNG downloads\n4. Open PNG (should match chart appearance)\n5. Test export button alternative\n6. Verify filename includes chart name and date"
+    },
+    {
+      "id": 20,
+      "title": "Performance Optimization with Lazy Loading",
+      "description": "Add IntersectionObserver for lazy chart loading and skeleton screens to achieve FCP <1.5s",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "low",
+      "details": "Optimize page load performance:\n\nLazy Loading:\n```javascript\nclass ChartLazyLoader {\n  constructor() {\n    this.observer = new IntersectionObserver(\n      this.handleIntersection.bind(this),\n      {\n        root: null,\n        rootMargin: '100px',\n        threshold: 0.1\n      }\n    );\n  }\n  \n  observe(chartContainer) {\n    this.observer.observe(chartContainer);\n  }\n  \n  handleIntersection(entries) {\n    entries.forEach(entry => {\n      if (entry.isIntersecting) {\n        const chartId = entry.target.dataset.chartId;\n        this.loadChart(chartId);\n        this.observer.unobserve(entry.target);\n      }\n    });\n  }\n  \n  loadChart(chartId) {\n    const skeleton = document.querySelector(`[data-chart-id=\"${chartId}\"] .skeleton`);\n    skeleton.classList.add('loading');\n    \n    // Render chart\n    renderChart(chartId).then(() => {\n      skeleton.remove();\n    });\n  }\n}\n\n// Usage\nconst lazyLoader = new ChartLazyLoader();\ndocument.querySelectorAll('.chart-container').forEach(container => {\n  lazyLoader.observe(container);\n});\n```\n\nSkeleton Screen:\n```html\n<div class=\"chart-container\" data-chart-id=\"hrvChart\">\n  <div class=\"skeleton\">\n    <div class=\"skeleton-header\"></div>\n    <div class=\"skeleton-chart\"></div>\n  </div>\n  <canvas id=\"hrvChart\" width=\"400\" height=\"200\"></canvas>\n</div>\n```\n\nCSS:\n```css\n.skeleton {\n  animation: pulse 1.5s ease-in-out infinite;\n}\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.5; }\n}\n\n.skeleton-header {\n  height: 30px;\n  background: #e5e7eb;\n  border-radius: 4px;\n  margin-bottom: 10px;\n}\n\n.skeleton-chart {\n  height: 200px;\n  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);\n  background-size: 200% 100%;\n  animation: shimmer 1.5s infinite;\n}\n\n@keyframes shimmer {\n  0% { background-position: -200% 0; }\n  100% { background-position: 200% 0; }\n}\n```\n\nPerformance Budget:\n- First Contentful Paint: <1.5s\n- Time to Interactive: <3s\n- Largest Contentful Paint: <2.5s",
+      "testStrategy": "Acceptance Criteria (AC5.4):\n- [ ] FCP < 1.5 seconds\n- [ ] Charts load progressively\n- [ ] Skeleton screens visible during load\n\nTest Method:\n1. Open dashboard with network throttling (Slow 3G)\n2. Measure FCP in Chrome DevTools Performance tab\n3. Verify skeleton screens appear immediately\n4. Scroll down (charts below fold should lazy load)\n5. Run Lighthouse performance audit (target score >90)\n6. Test on real mobile device"
+    }
+  ],
+  "metadata": {
+    "projectName": "Coach Dashboard v2",
+    "totalTasks": 20,
+    "sourceFile": "docs/prd/coach-dashboard-v2-prd.md",
+    "generatedAt": "2025-12-03",
+    "phases": {
+      "phase1": {
+        "name": "Critical UX Fixes",
+        "priority": "P0",
+        "tasks": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "estimatedDuration": "2-3 days"
+      },
+      "phase2": {
+        "name": "Comparison & Prep",
+        "priority": "P1",
+        "tasks": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "estimatedDuration": "3-4 days"
+      },
+      "phase3": {
+        "name": "Accessibility & Print",
+        "priority": "P2",
+        "tasks": [
+          10,
+          11,
+          12,
+          13
+        ],
+        "estimatedDuration": "2-3 days"
+      },
+      "phase4": {
+        "name": "Mobile & Navigation",
+        "priority": "P3",
+        "tasks": [
+          14,
+          15,
+          16
+        ],
+        "estimatedDuration": "3-4 days"
+      },
+      "phase5": {
+        "name": "Polish",
+        "priority": "P4",
+        "tasks": [
+          17,
+          18,
+          19,
+          20
+        ],
+        "estimatedDuration": "2 days"
+      }
+    },
+    "successMetrics": {
+      "timeToReadiness": "<10 seconds (from ~60s)",
+      "timeToSessionPrep": "<2 minutes (from ~5min)",
+      "weekVisibility": "100% (from 33%)",
+      "wcagCompliance": "Level AA (from Level A)",
+      "lighthouseAccessibility": ">95 (from ~75)"
+    }
+  },
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Generate data/weeks manifest when saving data",
+        "description": "Create an automated manifest of all available week JSON files so the frontend can discover weeks without hardcoding.",
+        "details": "Add an `update_week_manifest()` helper inside `scripts/coach-ingest` that scans `data/weeks/*.json`, loads each payload, and writes `data/weeks/index.json` containing an ordered list like `{ weekOf, displayLabel, hasAllSections, path }` plus `_meta` excerpts needed for navigation. Call this helper from `save_week_data()` and any command (export, weekly, prep) that mutates a week so the manifest stays fresh.\nPseudo-code:\n```\ndef update_week_manifest():\n    weeks = []\n    for file in sorted(Path('data/weeks').glob('*.json')):\n        payload = json.load(open(file))\n        weeks.append({\n            \"weekOf\": payload[\"weekOf\"],\n            \"displayLabel\": payload.get(\"_meta\", {}).get(\"display_label\") or format_date(payload[\"weekOf\"]),\n            \"isComplete\": all(payload.get(\"_meta\", {}).get(\"data_completeness\", {}).values()) or False,\n            \"filename\": file.name\n        })\n    Path('data/weeks/index.json').write_text(json.dumps({\"weeks\": weeks}, indent=2))\n```\nShip the manifest file with the repo for backwards compatibility and document the expectation in README so future data imports don’t require code edits.",
+        "testStrategy": "Run `./scripts/coach-ingest export` twice to create/update weeks, then inspect `data/weeks/index.json` to ensure the new week is appended and sorted; add a lightweight Python unit (e.g., pytest or script) that imports the helper and asserts it produces valid JSON even when a week lacks `_meta`.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "2",
+        "title": "Front-end week discovery using manifest",
+        "description": "Replace the hardcoded week arrays in index.html with an asynchronous discovery flow driven by the generated manifest.",
+        "details": "Create a `discoverAvailableWeeks()` function in `index.html` that fetches `/data/weeks/index.json?cacheBust=${Date.now()}`, validates the JSON, sorts by date descending, then populates `availableWeeks`, `weekMetadataCache`, and any auxiliary config. Defer rendering until discovery resolves: `await discoverAvailableWeeks(); renderWeekTabs(); renderDashboard(); updateWeekNavigation();`. Add graceful fallbacks (use embedded data if manifest fetch fails) and surface loading/error states in the UI. Ensure `renderWeekTabs()` and navigation buttons use the metadata supplied by the manifest instead of `WEEK_CONFIG` constants.",
+        "testStrategy": "Update `tests/dashboard.spec.ts` to stub an extra week manifest entry, reload the page, and assert that the additional tab renders and calls `fetch('data/weeks/<week>.json')` when clicked (use `page.route` to serve fixture JSON); also add a test that simulates a failed manifest fetch and confirms the dashboard still loads from the embedded data.",
+        "priority": "medium",
+        "dependencies": [
+          "1"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "3",
+        "title": "Implement readiness score logic and badge",
+        "description": "Provide the single glance Ready/Caution/Limited indicator using weighted WHOOP metrics per the PRD.",
+        "details": "Add a `calculateReadiness(data)` utility in `index.html` that normalizes HRV, RHR, sleep, and recovery against configurable baselines (e.g., HRV target 60ms, RHR target 60 bpm) and returns `{score, status, message}` where weights follow 30% HRV, 20% RHR, 30% sleep, 20% recovery. Insert a new DOM block above the summary grid containing an icon, status label, numeric score (0–100), and brief explanation. Wire `renderDashboard()` to call the calculator whenever `data` changes so week switching updates the badge, and provide fallback copy if any metric is missing.",
+        "testStrategy": "Extend Playwright to read the readiness badge text for both high-recovery fixture data (expect status `Ready`) and low-recovery fixture (expect `Limited`); add a unit-style browser test that evaluates `calculateReadiness(mockData)` to ensure weighting math returns expected thresholds (<0.5 => Limited, etc.).",
+        "priority": "medium",
+        "dependencies": [
+          "2"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "4",
+        "title": "Adopt color-blind safe palette & redundant encodings",
+        "description": "Refresh the CSS and chart colors to a WCAG-compliant blue/orange scheme with icons/text to support color-blind users.",
+        "details": "Replace the current red/green CSS variables in `index.html` with tokens like `--status-ready: #0f766e`, `--status-caution: #f59e0b`, `--status-limited: #dc2626`, plus neutrals tuned for contrast. Update Chart.js dataset colors to the new palette and add patterned or dashed fills where necessary. For status chips (readiness, delta indicators), insert SVG icons (check, exclamation, stop) next to text so meaning isn’t color-only. Run the palette through a simulator (e.g., ColorBrewer combos) and document the mapping in comments for future contributors.",
+        "testStrategy": "Write a Playwright assertion that reads `getComputedStyle` for `.readiness-badge` to ensure the contrast ratio against the background exceeds 3:1 (compare rgb via helper), and manually validate charts via screenshot tests (existing `tests/dashboard.spec.ts-snapshots`) after updating reference images.",
+        "priority": "medium",
+        "dependencies": [
+          "3"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "5",
+        "title": "Keyboard focus and tab order enhancements",
+        "description": "Ensure every interactive element shows a visible 2px focus ring and participates in a logical tab sequence.",
+        "details": "In `index.html` CSS, add `.btn:focus-visible, .week-tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }` and apply `tabindex=\"0\"` to custom controls like chart toggles, mobile nav buttons, and the CSV modal close icon. Implement focus trap logic for the CSV modal (capture Tab/Shift+Tab) and ensure week tabs, nav arrows, and readiness components are ordered semantically in the DOM. Document keyboard behaviors (Esc to close modal) via ARIA attributes.",
+        "testStrategy": "Add a Playwright test that presses `Tab` multiple times and checks `document.activeElement.classList` for expected elements (week tabs, action buttons) while verifying `outline-width` via `window.getComputedStyle`; include a test that opens the modal, tabs through controls, and confirms focus returns to the trigger on close.",
+        "priority": "medium",
+        "dependencies": [
+          "4"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "6",
+        "title": "Surface existing coach prep data in summary cards",
+        "description": "Render the stored velocity, blockers, wins, and questions data so coaches no longer have to run the CLI prep command.",
+        "details": "Create a new `Coach Prep` section near the top of `index.html` containing subcards for readiness trend (using `data.velocity`), blockers (`data.blockers` list with counts), wins (top three), and `coach_questions`. Guard against missing fields by checking `Array.isArray`. Add helper functions such as `renderVelocity()` and `renderBlockers()` invoked within `renderDashboard()`. Styling should align with the new palette and include icons for blockers/wins. Populate from the JSON created by `scripts/coach-ingest` so nothing manual is required.",
+        "testStrategy": "Update `tests/dashboard.spec.ts` to look up `.coach-prep-section`, assert it’s visible, and verify child selectors (`#blockersList li`) match the JSON fixtures; also add a regression test that loads a fixture lacking `blockers` and confirms the UI shows a \"No blockers logged\" message rather than blank space.",
+        "priority": "medium",
+        "dependencies": [
+          "2"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "7",
+        "title": "Add week-over-week comparison toggle to charts",
+        "description": "Allow coaches to overlay the previous week’s datasets on each chart via a compare switch.",
+        "details": "Introduce a `comparisonCache` map keyed by week that stores previously fetched JSON. Add UI controls (e.g., labeled toggle buttons) for each chart group that call `toggleComparison('hrvChart')`. When enabled, fetch the prior week entry from the manifest (if available), add a dashed dataset (`borderDash: [6,4]`, color `#94a3b8`) to the corresponding Chart.js instance, and update the legend to show both series. Handle cases with no previous week by disabling the toggle with explanatory text.",
+        "testStrategy": "Write a Playwright test that mocks the manifest to include at least two weeks, clicks the compare toggle for HRV, and checks via `page.evaluate` that `chartInstances.hrv.data.datasets.length` increases; also ensure toggling off removes the dataset to avoid stale overlays.",
+        "priority": "medium",
+        "dependencies": [
+          "2"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "8",
+        "title": "Show delta indicators on key metrics",
+        "description": "Display week-over-week changes (e.g., “+5ms vs last week”) in metric headers to reinforce trends.",
+        "details": "After the comparison cache from Task 7 resolves, compute deltas for recovery, HRV, RHR, sleep, strain, calories, and weight. Create helper `formatDelta(current, previous, unit, inverse=false)` that returns `{label:'+5ms', trend:'up'}` with proper sign conventions (e.g., RHR lower is better). Update the Recovery, Calories, Steps cards and the measurements table headers to include a delta badge with arrow icon + color-coded text (using the accessible palette). Ensure deltas recalc on every `loadWeek` call and hide the badge when no previous data exists.",
+        "testStrategy": "Extend Playwright to load two fixture weeks, assert that `#recoveryDelta` contains the correct string, and verify that when a first-week-only dataset is loaded the delta elements are hidden (to avoid misleading zero values).",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "9",
+        "title": "Build collapsible Session Prep panel",
+        "description": "Provide the dedicated session prep sidebar with red flags, wins, questions, and focus areas per the PRD.",
+        "details": "Add a toggle button (e.g., \"Open Prep Panel\") that reveals a slide-in `<aside>` containing: readiness trend summary, `Red Flags` list from `blockers`, `Wins` list, `Client Questions`, `Suggested Topics`, and `Focus Areas` (from `coach_prep`). Use CSS transitions for smooth open/close and ensure the panel is keyboard navigable. Implement `renderSessionPrepPanel(data)` to populate sections and reuse the calculations from Tasks 3,6,8 for consistency. Provide ARIA attributes (`aria-expanded`, `role='complementary'`).",
+        "testStrategy": "Create Playwright tests that click the toggle, confirm `.session-prep-panel` becomes visible, and verify the lists contain the expected number of items; add a regression test that ensures focus shifts inside the panel when opened and returns to the trigger when closed.",
+        "priority": "medium",
+        "dependencies": [
+          "6",
+          "7",
+          "8"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "10",
+        "title": "Extend baseline bands/annotations to all recovery charts",
+        "description": "Standardize baseline ranges on RHR, Sleep, and Strain charts similar to HRV.",
+        "details": "Extract the HRV baseline dataset logic into a reusable `applyBaseline(chartConfig, {min, max, label, color})` helper. For RHR, show an optimal band (e.g., 58–64 bpm) with inverted semantics; for Sleep, convert to annotation lines for desired range (7–9h) plus shading; for Strain, add a band representing the coach’s target (10–13). Update the Chart.js configurations in `renderDashboard()` accordingly and ensure the legend describes the band to keep screen readers informed.",
+        "testStrategy": "Add a Playwright test that inspects `chartInstances.rhr.data.datasets` to confirm baseline datasets exist (look for `label === 'Baseline Upper'`), and capture updated screenshot snapshots of the charts to guard against regressions.",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "11",
+        "title": "Add accessible data table toggles for charts",
+        "description": "Provide tabular representations of each chart’s data for screen readers and printing.",
+        "details": "For every Chart.js card, insert a `button` labeled “Show Data Table” that toggles a `<table>` element containing the same series. Build a helper `renderChartTable(containerId, rows)` that dynamically creates `<th scope=\"col\">` headers and `<caption>` describing the metric. Hide tables by default with `hidden` attribute and toggle visibility + aria-expanded states when buttons are pressed. Ensure tables reuse the data arrays so updates remain in sync with week switching and comparison mode.",
+        "testStrategy": "Extend Playwright tests to click the toggle on the HRV card, assert a `<table>` becomes visible with 7 rows, and verify that toggling again hides the table; also add an accessibility assertion using `getByRole('table', { name: /HRV/i })`.",
+        "priority": "medium",
+        "dependencies": [
+          "10"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "12",
+        "title": "Semantic/ARIA accessibility audit pass",
+        "description": "Apply semantic roles, ARIA labels, and live regions needed to hit Lighthouse Accessibility >95.",
+        "details": "Refactor the layout in `index.html` to wrap logical sections in `<section role=\"region\" aria-labelledby=\"...\">`, give charts `role=\"img\" aria-describedby` referencing text summaries, mark the readiness badge as `aria-live=\"polite\"`, and ensure modal markup includes `role=\"dialog\" aria-modal=\"true\"`. Provide skip-link navigation at the top for keyboard users. Update headings to maintain a proper hierarchy and add descriptive `aria-label`s for control groups (week tabs, bottom nav).",
+        "testStrategy": "Introduce an automated accessibility test using `@axe-core/playwright` (add dev dependency if needed) to scan `/index.html`; additionally, add Playwright role-based assertions (e.g., `expect(page.getByRole('region', { name: 'WHOOP Recovery Metrics'})).toBeVisible()`) to guard semantics.",
+        "priority": "medium",
+        "dependencies": [
+          "11"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "13",
+        "title": "Print layout improvements for grayscale output",
+        "description": "Revise the print stylesheet so PDFs include headers/footers and remain legible in black & white.",
+        "details": "Enhance the existing `@media print` block in `index.html` by (1) adding a print-only header that shows client name (e.g., constant `const CLIENT_NAME = 'Hayden'`) plus week range, (2) moving the existing footer to use CSS counters for page numbers, and (3) forcing charts to adopt grayscale-friendly styles (e.g., `filter: grayscale(100%)` plus annotation labels). Provide dotted borders or patterned fills in place of color to differentiate series. Update `exportPDF()` to set the header text just before calling `window.print()` so it reflects the current week.",
+        "testStrategy": "Use Playwright’s `page.emulateMedia({ media: 'print' })` to assert that `#printHeader` and `#printFooter` elements are visible and contain the correct text; capture a PDF via Chromium headless to manually verify grayscale readability.",
+        "priority": "medium",
+        "dependencies": [
+          "4",
+          "11"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "14",
+        "title": "Mobile bottom navigation bar",
+        "description": "Add the thumb-friendly bottom nav for <768px widths with quick access to key sections.",
+        "details": "Insert a `<nav class=\"mobile-bottom-nav\">` with buttons for Summary, Recovery, Nutrition, and Prep. Use `position: fixed; bottom: 0; width: 100%` with safe-area padding, and show it only via `@media (max-width: 767px)`. Each button should call `document.querySelector(targetSelector).scrollIntoView({ behavior: 'smooth' })` and update `aria-current` as sections enter the viewport (use IntersectionObserver). Ensure the nav does not overlap content by adding bottom padding to the page.",
+        "testStrategy": "Add a Playwright mobile-view test (`page.setViewportSize({ width: 390, height: 844 })`) that asserts `.mobile-bottom-nav` is visible, clicks the Nutrition button, and verifies `window.scrollY` advanced to the nutrition section (compare boundingClientRect values).",
+        "priority": "medium",
+        "dependencies": [
+          "11"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "15",
+        "title": "Touch swipe gestures for week navigation",
+        "description": "Allow week switching via horizontal swipes on touch devices.",
+        "details": "Attach `touchstart`, `touchmove`, and `touchend` listeners to the main container to detect horizontal swipe distances. When the swipe exceeds ~80px and the vertical delta is small, trigger `navigateToPrevWeek()` or `navigateToNextWeek()` and provide haptic feedback via the Vibration API (where supported). Use passive listeners to avoid scroll jank and debounce to prevent rapid multi-swipes. Expose a helper (e.g., `window.__handleSwipe('next')`) for testing.",
+        "testStrategy": "Write a Playwright test that dispatches custom `touchstart/touchend` events via `page.evaluate` (passing synthetic coordinates) and asserts that `#weekDate` text updates to the next week; include a regression test ensuring swipes do nothing when only one week is available.",
+        "priority": "medium",
+        "dependencies": [
+          "2",
+          "14"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "16",
+        "title": "Keyboard shortcuts for week nav and print",
+        "description": "Implement Arrow Left/Right navigation and Ctrl/Cmd+P handling without conflicts.",
+        "details": "Add a `document.addEventListener('keydown', handler)` that (a) intercepts `ArrowLeft`/`ArrowRight` (when no input is focused) to invoke prev/next week, (b) handles `Ctrl/Cmd + P` by calling `event.preventDefault(); exportPDF();`, and (c) optionally exposes `?` to show a help tooltip describing shortcuts. Ensure focusable elements respect default behavior (e.g., arrow keys inside text inputs shouldn’t navigate weeks).",
+        "testStrategy": "Augment Playwright tests to press `ArrowRight` and verify the week label increments, press `ArrowLeft` to go back, and press `Meta+P` while spying on `window.print` to confirm it fires without the browser default dialog (mock `window.print = vi.fn()`).",
+        "priority": "medium",
+        "dependencies": [
+          "2"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "17",
+        "title": "Small multiples correlation view",
+        "description": "Add the optional stacked mini-chart mode to analyze HRV, RHR, Sleep, and Strain together.",
+        "details": "Introduce a toggle (e.g., `View: Charts | Small Multiples`) that swaps the current grid for a dedicated container with four synchronized sparkline canvases sharing the same x-axis. Build `renderSmallMultiples()` to create mini Chart.js instances with aligned tooltips and a shared vertical cursor (listen to `mousemove` events). Preserve existing chart instances when toggled back to standard view to avoid re-render overhead.",
+        "testStrategy": "Add a Playwright test that clicks the toggle, asserts `.small-multiples` becomes visible, and verifies there are four canvases rendered; also ensure toggling back restores the original grid and that only one set of charts exists in the DOM at a time (no duplicates).",
+        "priority": "medium",
+        "dependencies": [
+          "7",
+          "10"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "18",
+        "title": "Dark mode support via prefers-color-scheme",
+        "description": "Respect system dark mode preferences for both UI and charts.",
+        "details": "Define CSS custom property variants inside `@media (prefers-color-scheme: dark)` covering backgrounds, text, cards, and nav. In JS, watch `window.matchMedia('(prefers-color-scheme: dark)')` and update Chart.js defaults plus existing instances (e.g., call `chart.update('none')` after mutating colors). Ensure readiness badge, prep panel, and mobile nav switch to dark-friendly colors while preserving accessibility contrast.",
+        "testStrategy": "Use Playwright’s `page.emulateMedia({ colorScheme: 'dark' })` to confirm the `<body>` background changes and Chart.js canvas text colors update (evaluate `chart.options.scales.x.ticks.color`). Capture dark-mode screenshots to serve as regression baselines.",
+        "priority": "medium",
+        "dependencies": [
+          "4",
+          "17"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "19",
+        "title": "Per-chart export to PNG",
+        "description": "Let coaches save individual charts as PNGs via a contextual action.",
+        "details": "Add a three-dot menu or button on each chart card that calls a new `exportChartAsPng(chartId)` helper. This helper should retrieve `chartInstances[chartId].toBase64Image()`, create a temporary `<a download>` element (e.g., `Weekly_HRV_2025-11-23.png`), and trigger a click. Provide feedback (toast) if export fails and disable the option until the chart has rendered. Ensure the feature works in both regular and comparison modes.",
+        "testStrategy": "Insert a Playwright test that clicks the export button, intercepts `window.URL.createObjectURL` or spies on `HTMLElement.click` for the download link, and asserts the generated filename includes the chart name and week date.",
+        "priority": "medium",
+        "dependencies": [
+          "10",
+          "17"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "20",
+        "title": "Performance optimizations (lazy charts & skeletons)",
+        "description": "Reduce First Contentful Paint to <1.5s by deferring heavy work and showing lightweight placeholders.",
+        "details": "Implement an `IntersectionObserver` that delays Chart.js instantiation until a chart card scrolls into view; before rendering, display skeleton loaders (animated gradient blocks) within each card. Precompute derived metrics (readiness, deltas) before chart creation to avoid repeated calculations, and batch DOM writes with `requestAnimationFrame`. Defer non-critical fetches (comparison data, manifest metadata) using `requestIdleCallback` or `setTimeout` fallback. Measure timings with `performance.mark` + `performance.measure` and log to console in dev mode for monitoring.",
+        "testStrategy": "Add a Playwright performance test that records `performance.getEntriesByName('charts-rendered')` to ensure charts initialize only after scrolling; run Lighthouse or Chromium trace locally to confirm FCP drops below 1.5s and document the metrics in PRD/README for validation.",
+        "priority": "medium",
+        "dependencies": [
+          "7",
+          "10",
+          "11"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "21",
+        "title": "Null-safe measurement rendering",
+        "description": "Ensure the measurements card renders missing numeric values as a styled placeholder instead of literal nulls so Week 23 remains readable.",
+        "details": "Inspect `index.html` measurement rendering loop (around lines 1143-1150). Replace direct string interpolation with guards that leverage optional chaining and the nullish coalescing operator (`value ?? null`). Pseudo-code: `const formatValue = (val, unit) => (val ?? null) !== null ? `${val}${unit}` : '—'; measurements.forEach(m => renderRow(formatValue(data.measurements?.[m.key], m.unit)));`. Apply a shared CSS utility (e.g., `.text-placeholder { color: var(--gray-500); font-style: italic; }`) so placeholders are visually distinct per current accessibility guidance (WCAG 2.2). Keep logic framework-agnostic to avoid regressions. Use modern JS syntax supported by evergreen browsers as of 2024 (ES2022).",
+        "testStrategy": "Load both Week 16 and Week 23 locally, confirm placeholders show \"—\" for null fields with accessible contrast. Use browser devtools accessibility tree to ensure screen readers announce \"Not recorded\" (add visually hidden text if needed). Run existing regression suite (`npm test`) to ensure no snapshot drift.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T09:34:13.036Z"
+      },
+      {
+        "id": "22",
+        "title": "Daily steps aggregation from nutrition data",
+        "description": "Derive the average steps for each week from the most granular data source, falling back to measurement totals only when daily data is missing.",
+        "details": "Update the logic near line 1091 to inspect `data.nutrition.daily`. Use reduce to sum daily entries and divide by their count, guarding against undefined arrays. Recommended snippet: `const hasDailySteps = Array.isArray(data.nutrition?.daily) && data.nutrition.daily.some(d => typeof d.steps === 'number'); const avgSteps = hasDailySteps ? Math.round(data.nutrition.daily.reduce((sum, day) => sum + (day.steps || 0), 0) / data.nutrition.daily.length) : Math.round((data.measurements?.steps || 0) / 7);`. Keep calculations integer-rounded to match UI expectations. Document constants (e.g., `DAYS_PER_WEEK = 7`) to prevent magic numbers. This aligns with 2025 analytics best practices of deferring to the most granular dataset.",
+        "testStrategy": "Add unit-level coverage via a lightweight script (e.g., Vitest or Jest) that imports the calculation helper and asserts Week 23 daily values produce 9,411. Manually validate UI shows same number for both data sources. Re-run browser smoke tests for both weeks.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T09:34:13.039Z"
+      },
+      {
+        "id": "23",
+        "title": "Chart day alignment using nutrition days as source of truth",
+        "description": "Guarantee charts render seven day labels even when WHOOP data is sparse by syncing datasets to the nutrition daily structure.",
+        "details": "Refactor `loadWeek()` / `renderDashboard()` to compute a canonical `days` array from `data.nutrition.daily.map(d => d.day)` (fallback to WHOOP if nutrition missing). For each visualization (charts, readiness tiles), map WHOOP values onto this canonical array: `const days = getCanonicalDays(data); const whoopByDay = new Map(data.whoop?.daily?.map(entry => [entry.day, entry])); const normalizedWhoop = days.map(day => whoopByDay.get(day) ?? {strain: null, recovery: null});`. Pass `null` gaps to Chart.js 4.4+ using `spanGaps: false` so missing values render as dotted segments per 2025 data-vis guidance. Ensure tooltips handle `null` gracefully and accessibility labels explain missing data. Avoid mutating original arrays to keep fetch caches intact.",
+        "testStrategy": "Execute visual regression check: confirm Week 23 shows seven labels with empty states on Tue/Thu. Inspect Chart.js dataset to ensure `null` points create gaps not zeros. Add unit tests for `getCanonicalDays` helper verifying nutrition-first fallback behavior. Run `npm test` afterward.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T09:34:13.041Z"
+      },
+      {
+        "id": "24",
+        "title": "Data completeness indicator across tabs and measurement card",
+        "description": "Surface partial data states via badges on week tabs and measurement cards whenever `_meta.data_completeness.measurements` is false.",
+        "details": "Introduce a `isMeasurementsComplete` boolean derived from `_meta.data_completeness?.measurements`. In `renderWeekTabs()`, append a badge element (e.g., `<span class=\"badge badge-warning\" aria-label=\"Measurements incomplete\">⚠</span>`) following mobile-first design patterns (Perplexity 2024 guidance). Extend CSS to support `.badge-warning` with high-contrast color tokens (`var(--warning-500)`). In the measurements card header, show a secondary label \"Data incomplete\" with tooltip explaining missing fields. Ensure ARIA attributes like `role=\"status\"` and `aria-live=\"polite\"` for dynamic swaps. Keep DOM changes minimal to preserve hydration-free implementation.",
+        "testStrategy": "Toggle completeness flag in mock data and verify badge visibility toggles accordingly on both desktop and mobile breakpoints. Use browser accessibility audit to ensure badge has descriptive text for screen readers. Run UI regression suite (Playwright if available) to confirm tab layouts remain stable.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T09:34:13.043Z"
+      },
+      {
+        "id": "25",
+        "title": "Dual-week fallback data & fetch error messaging",
+        "description": "Expand the embedded JSON fallback to include both Week 16 and Week 23 snapshots and improve user-facing error states when remote fetch fails.",
+        "details": "In `index.html` (lines 750-836), convert the inline `<script id=\"fallback-data\">` to hold an object keyed by ISO week (e.g., `{ \"2025-11-16\": {...}, \"2025-11-23\": {...} }`). Ensure the data mirrors the latest API schema (measurements, nutrition.daily steps array, WHOOP daily). Update the fetch logic to `try/fetch` else `catch` to display a toast/banner: `showError('Unable to load live data, showing cached Nov 23 snapshot.');`. Follow resilience best practices (2025 frontend reliability studies): log errors to `console.error`, gate fallback usage behind explicit checks, and avoid blocking rendering. Consider storing fallback JSON in `<template>` to keep DOM clean. Maintain CSP compliance by keeping inline script type `application/json`.",
+        "testStrategy": "Kill the network (e.g., stop local server) and reload the dashboard to confirm fallback data populates both weeks with the new error message. Verify console logs show diagnostic info. Write a small Cypress/Playwright test simulating fetch failure (using `page.route` to abort) and assert fallback UI appears.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-03T09:34:13.046Z"
+      },
+      {
+        "id": 26,
+        "title": "Install Express stack & chat-server script",
+        "description": "Add the required backend dependencies and npm entry point for the upcoming chat service.",
+        "details": "Update package.json to include \"express\" and \"cors\" alongside the already-installed ai, @ai-sdk/google, and dotenv, then run `npm install express cors` so package-lock.json stays in sync. Add an npm script such as \"chat-server\": \"node server.mjs\" (matching the project’s CommonJS config while keeping the file extension .mjs for ESM syntax) so the chatbot backend can be launched via `npm run chat-server`. Ensure .env already holding GEMINI_API_KEY is documented for the server process, and verify that existing scripts (insights, tests) remain untouched.",
+        "testStrategy": "After installing dependencies, run `npm ls express cors` to confirm versions are locked, then execute `npm run chat-server` (once server.mjs from Task 27 exists) to ensure Node picks up the script without missing-module errors.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Implement SSE chat server endpoints",
+        "description": "Create server.mjs with Express routes for health checks and streaming chat responses backed by the Vercel AI SDK.",
+        "details": "Build server.mjs that imports express, cors, dotenv/config, { streamText } from \"ai\", and google() from \"@ai-sdk/google\". Configure middleware: `app.use(cors({ origin: /localhost|127\\.0\\.0\\.1/, methods: ['POST','GET'] }))`, `app.use(express.json({ limit: '1mb' }))`, and a simple in-memory rate limiter that counts requests per IP over a 60s window capped at 10 (`if (recentCount >= 10) return res.status(429).json({ error: 'Rate limit exceeded' })`). Add `GET /api/health` returning `{ status: 'ok' }`. For `POST /api/chat`, validate body `{ messages: Array<{ role: 'user'|'assistant', content: string }>, contextSummary?: string }`. When valid, set SSE headers (`Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`). Call `const result = await streamText({ model: google('gemini-2.0-flash'), system: buildSystemPrompt(contextSummary), messages, temperature: 0.7, maxOutputTokens: 768 })` and pipe tokens as `res.write(\n  \"data: \" + JSON.stringify({ token }) + \"\\n\\n\"\n)` while listening for `result.on('error', ...)` to send an `event: error`. Close the stream on `result.finalText`. Start the server on `process.env.PORT || 8787` and log readiness.",
+        "testStrategy": "Run `npm run chat-server` with GEMINI_API_KEY set, then `curl -N http://localhost:8787/api/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"Hi\"}]}'` to verify event-stream chunks arrive; send 11 rapid requests from the same host to confirm a 429 response; hit `/api/health` to confirm 200 OK.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Create coaching prompt & context utilities",
+        "description": "Add reusable helpers inside server.mjs (or a small utils module) to build the motivational interviewing system prompt and merge week context into each AI call.",
+        "details": "Implement `function buildSystemPrompt(contextSummary)` returning the PRD template that includes role, boundaries (no medical advice, refer persistent symptoms to professionals), motivational interviewing cadence (ask → reflect → suggest), brevity guidance (2–3 sentences), and the mandated disclaimer string so the model includes it in its first reply. Add `function formatContext(data)` that accepts either a parsed JSON object from `v2/data/weeks/*.json` or the condensed text passed from the frontend and produces bullet-style facts: week label, nutrition averages vs targets, WHOOP recovery/sleep/HRV, measurements, wins, and training notes (fallback to \"N/A\" when values missing). In POST /api/chat, resolve the context by preferring `req.body.contextSummary` but, when absent, read `data/weeks/${currentWeek}.json` as a fallback (cache the most recent file for latency) before passing `buildSystemPrompt(\n  `Context: ${formatContext(...)}\\nWithin those facts, speak as an encouraging coach.\"\n)` into streamText. Sanitize user content length (e.g., cap at 2000 chars) before calling the model.",
+        "testStrategy": "Temporarily log `buildSystemPrompt()` output and ensure it embeds the disclaimer and motivational interviewing bullet list; unit tests in Task 33 will assert the helper returns expected strings for sample data blobs.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 29,
+        "title": "Implement frontend getCoachingContext helper",
+        "description": "Expose a browser-side function that summarizes the currently loaded week data and passes it with each chat request.",
+        "details": "In index.html’s main script (near other helpers), add `function getCoachingContext()` that reads from the global `data`, `previousWeekData`, and metadata already populated by loadWeek(). Compose a concise multiline string such as `Week ${data._meta.display_label}: Calories ${avg.calories}/${targets.calories} (${adherence}); Protein ...; WHOOP recovery ${whoop.averages.recovery}% with ${countMissingWhoopDays()} missing days; Steps ${measurements.steps}; Wins: ...; Training: ...; Wellbeing flags: ...`. Handle undefined entries by substituting \"N/A\" so the backend never receives undefined tokens. When the chat form is submitted, call this helper and include its result in the fetch payload `{ contextSummary: getCoachingContext(), weekOf: data.weekOf }` alongside `messages`. Keep the helper pure so it can also be imported into Vitest later.",
+        "testStrategy": "Temporarily `console.log(getCoachingContext())` after calling `renderDashboard()` to ensure the string updates as different weeks are loaded, and verify that outgoing POST bodies in the browser dev tools include the `contextSummary` field.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "Build chat widget markup & styles",
+        "description": "Add the floating chat launcher and expandable panel UI that matches the dashboard’s existing design system.",
+        "details": "Insert near the end of index.html’s body: (1) a round FAB (`<button id=\"chatToggle\" class=\"chat-toggle\">`) anchored bottom-right, and (2) an `<section id=\"chatPanel\" class=\"chat-panel\" aria-live=\"polite\">` containing header with title and close icon, a scrollable `<div class=\"chat-messages\" role=\"log\">`, a disclaimer/footer slot, error banner, and a `<form id=\"chatForm\">` with textarea + send button icon (disabled state styling). Extend the stylesheet with variables aligned to existing palette (`--chat-bg`, `--chat-border`). Define `.chat-panel` default `transform: translateY(120%)` and `.chat-panel.open` to slide it up; include `.chat-panel.mobile` full-width behavior for max-width: 640px. Style assistant/user bubbles with contrasting colors, include `.typing-indicator` animation keyframes, `.chat-error` banner, and `.chat-footer` for the persistent safety note. Ensure the toggle button hides on print (`@media print`).",
+        "testStrategy": "Open index.html in a browser, verify the floating button appears without overlapping existing FABs, toggle it to ensure ARIA attributes update, and resize the viewport down to 375px to confirm the panel snaps to full width without clipping content.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 31,
+        "title": "Add chat client streaming logic",
+        "description": "Wire the frontend chat widget to the backend using fetch streaming, message state management, and typing indicators.",
+        "details": "Within index.html’s script, add state (`let chatMessages = loadFromStorage() || []`, `let isStreaming = false`) and helper functions `renderChatMessages()` and `appendMessage(role, content, meta)`. Bind `chatToggle` and form submit events to open the panel, push the user message, and call `sendChatMessage`. `sendChatMessage` should: (a) disable the input, (b) build a payload `{ messages: [...chatMessages, { role: 'user', content: text }], contextSummary: getCoachingContext() }`, (c) call `fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })`, and (d) stream the response using `const reader = response.body.getReader(); const decoder = new TextDecoder(); while(!done){ chunk = decoder.decode(value); for (const line of chunk.split('\\n\\n')) if(line.startsWith('data:')) { const { token } = JSON.parse(line.slice(5)); appendToken(token); } }`. Maintain a placeholder assistant message while streaming to show live tokens, and surface network/API errors by appending a system bubble plus raising the `.chat-error` banner. Support aborting on close by storing an AbortController. Always re-enable the input once streaming completes.",
+        "testStrategy": "Serve index.html (e.g., `python -m http.server 8080`), start the chat server, send sample queries, and watch the assistant bubble grow character-by-character; disconnect the server mid-stream to ensure the UI surfaces an error and re-enables the input.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 32,
+        "title": "Persist chat history, disclaimers, and UX polish",
+        "description": "Enhance the widget with localStorage persistence, reset controls, mandatory disclaimers, and responsive UX behaviors.",
+        "details": "Add a `const CHAT_STORAGE_KEY = 'coachChatHistory'` utility that saves the last N (e.g., 20) messages after each render and reloads them on init; include `localStorage.removeItem` in a \"Clear conversation\" button within the chat header. Ensure the first assistant message automatically injects the mandated disclaimer string (if absent) so even restart sessions show it; also display a static footer note `\"I'm an AI coach...\"` inside `.chat-footer` plus a link to longer safety copy. Implement a typing indicator (div with animated dots) shown while the backend is streaming, and disable the send button plus textarea with `aria-busy=\"true\"` to meet accessibility guidelines. Add mobile tweaks (e.g., focus the textarea to raise the panel above the keyboard, prevent body scroll by toggling `document.body.style.overflow`). Provide robust error handling: set `.chat-error` text on 4xx/5xx, allow retry via a \"Resend\" button that replays the last user message, and display toast notifications via the existing `showToast` helper.",
+        "testStrategy": "Open the widget, send a question, refresh the page, and confirm past exchanges re-render; click \"Clear conversation\" to verify storage clears and the disclaimer message returns; toggle airplane mode during a request to ensure errors and retry controls appear without freezing the UI.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 33,
+        "title": "Create Vitest unit coverage for chat utilities",
+        "description": "Add targeted unit tests for the new context and prompt logic plus rate-limiting helpers.",
+        "details": "Install `vitest` (dev dependency) and create `vitest.config.js` pointing to the root JS files. Author tests in `tests/chat-context.test.mjs` covering getCoachingContext(): feed in sample week JSON from `data/weeks/2025-11-25.json` and assert the summary string contains calories, protein adherence, and win text even when nutrition targets are missing. Add `tests/prompt-builder.test.mjs` to ensure buildSystemPrompt() contains the safety disclaimer once and the motivational interviewing instructions. For the rate limiter, export the helper from server.mjs (or a dedicated module) and test that 10 timestamps within a minute pass while the 11th throws/returns a 429 flag. Mock Date.now where necessary. Use `vi.mock('fs')` for context loader to avoid disk access.",
+        "testStrategy": "Run `npx vitest run tests/chat-context.test.mjs tests/prompt-builder.test.mjs` and ensure all assertions pass locally and in CI; inspect coverage output to confirm core branches (missing targets, missing wins) execute.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 34,
+        "title": "Add integration tests for /api/chat streaming",
+        "description": "Verify the Express API routes, streaming format, rate limiting, and error handling without hitting the real Gemini service.",
+        "details": "Create `tests/chat-api.integration.test.mjs` that boots the Express app in-memory (export the app instance from server.mjs), uses `supertest` + `vitest` to POST to `/api/chat`, and mocks `ai`’s `streamText` to emit a deterministic async iterator of tokens plus a final text. Assert the `Content-Type` is `text/event-stream` and that the response body contains multiple `data:` chunks before completion. Add cases for validation errors (missing messages array), 429 responses when rate limiter state is pre-populated, and upstream failures (mock streamText to throw). Also hit `/api/health` to ensure it returns 200 + status key. Clean up listeners between tests to avoid Jest-style open handles.",
+        "testStrategy": "Execute `npx vitest run tests/chat-api.integration.test.mjs` so CI verifies the API contract without relying on the external Gemini endpoint.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "Author Playwright E2E tests for chat widget",
+        "description": "Extend the existing Playwright suite to cover the new UI flows end-to-end, including streaming, errors, and persistence.",
+        "details": "Create `tests/chat-widget.spec.ts` under the Playwright suite. In a `test.beforeEach`, serve index.html using Playwright’s `page.goto('file://' + ...)` or a lightweight static server (e.g., `npx http-server . -p 4173` launched via test fixtures). Mock the `/api/chat` network call using `page.route('**/api/chat', route => route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'data: {\"token\":\"Hi\"}\\n\\n' + ... }))` to simulate streaming tokens plus finalization. Write scenarios: (1) open the chat, send a question, confirm user and assistant bubbles appear and the typing indicator hides; (2) reload and assert the last message persists; (3) trigger a mocked 500 response and assert the error banner plus retry button show; (4) click \"Clear conversation\" to ensure history resets and disclaimer bubble returns; (5) validate mobile viewport via `page.setViewportSize({ width: 390, height: 844 })` to ensure the panel fits. Reuse existing `npm test` script (`playwright test`).",
+        "testStrategy": "Run `npm run test:chromium -- chat-widget.spec.ts` locally and in CI to confirm the widget behaves correctly under success, error, and persistence flows.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-12-04T06:54:25.401Z",
+      "updated": "2025-12-04T06:54:25.401Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

@@ -10,7 +10,9 @@
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "insights": "node scripts/generate-insights.mjs",
-    "insights:current": "node scripts/generate-insights.mjs 2025-11-25"
+    "insights:current": "node scripts/generate-insights.mjs 2025-11-25",
+    "chat-server": "node server.mjs",
+    "dev": "node server.mjs"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +24,8 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.44",
     "ai": "^5.0.106",
-    "dotenv": "^17.2.3"
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
   }
 }

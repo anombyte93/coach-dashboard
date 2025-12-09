@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:8888',
+    baseURL: 'http://localhost:3001',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -28,8 +28,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'python3 -m http.server 8888',
-    url: 'http://localhost:8888',
+    command: 'node server.mjs',
+    url: 'http://localhost:3001',
     reuseExistingServer: true,
+    timeout: 10000,
   },
 });

@@ -1,0 +1,133 @@
+{
+  "weekOf": "2025-11-30",
+  "measurements": {
+    "weight": 111.5,
+    "waist": 98,
+    "chest": 122,
+    "middle": 98,
+    "butt": 112.5,
+    "leg": 66,
+    "steps": 37615
+  },
+  "training": {
+    "overall_performance": "Excellent - PRs on almost everything!",
+    "completed": "4 sessions (3 regular + 1hr park walk)",
+    "difficulty": "Deadlifts hardest (10/10 effort), rest felt strong",
+    "recovery": "Good recovery between sessions",
+    "enjoyment": "High - feeling great about progress"
+  },
+  "nutrition": {
+    "daily": [
+      {
+        "day": "Sun",
+        "date": "2025-11-30",
+        "calories": 2305,
+        "protein": 176,
+        "carbs": 225,
+        "fat": 83,
+        "steps": 14142
+      },
+      {
+        "day": "Mon",
+        "date": "2025-12-01",
+        "calories": 2778,
+        "protein": 234,
+        "carbs": 247,
+        "fat": 114,
+        "steps": 3204
+      },
+      {
+        "day": "Tue",
+        "date": "2025-12-02",
+        "calories": 2925,
+        "protein": 208,
+        "carbs": 301,
+        "fat": 101,
+        "steps": 2797
+      },
+      {
+        "day": "Wed",
+        "date": "2025-12-03",
+        "calories": 2750,
+        "protein": 213,
+        "carbs": 263,
+        "fat": 98,
+        "steps": 2786
+      },
+      {
+        "day": "Thu",
+        "date": "2025-12-04",
+        "calories": 2668,
+        "protein": 248,
+        "carbs": 258,
+        "fat": 70,
+        "steps": 1934
+      },
+      {
+        "day": "Fri",
+        "date": "2025-12-05",
+        "calories": 3784,
+        "protein": 216,
+        "carbs": 549,
+        "fat": 97,
+        "steps": 3517
+      },
+      {
+        "day": "Sat",
+        "date": "2025-12-06",
+        "calories": 3704,
+        "protein": 276,
+        "carbs": 443,
+        "fat": 110,
+        "steps": 9235
+      }
+    ],
+    "averages": {
+      "calories": 2988,
+      "protein": 224,
+      "carbs": 327,
+      "fat": 96
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 295,
+      "fat": 85
+    },
+    "notes": "110% of calorie target (2988 avg). Protein at 115% (224g avg). Steps: 37,615 total. Note: 30-45 min warm-up needed for deadlifts including mobility work."
+  },
+  "whoop": {
+    "daily": [],
+    "averages": {
+      "hrv": null,
+      "rhr": null,
+      "sleep": null,
+      "strain": null,
+      "recovery": null
+    },
+    "sleep_metrics": {
+      "avg_duration": null,
+      "avg_efficiency": null,
+      "avg_need": null,
+      "avg_debt": null,
+      "consistency": null
+    },
+    "interpretation": "WHOOP data not available for this week."
+  },
+  "wellbeing": {
+    "pain": null,
+    "appetite": null,
+    "cravings": null,
+    "stress": null,
+    "mood": null,
+    "recovery_outside_gym": "Good",
+    "lifestyle_factors": null
+  },
+  "wins": [
+    "PRs on almost everything!",
+    "4 training sessions completed",
+    "Extra park walk for active recovery",
+    "High protein intake (224g avg)"
+  ],
+  "coach_questions": ""
+}
