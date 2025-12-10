@@ -51,6 +51,12 @@
       "start_date": "2025-11-23",
       "file": "2025-11-23.json",
       "status": "complete"
+    },
+    {
+      "week_id": "2025-W48-SUN",
+      "start_date": "2025-11-30",
+      "file": "2025-11-30.json",
+      "status": "complete"
     }
   ],
   "_ai_context": {
