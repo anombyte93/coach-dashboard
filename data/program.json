@@ -3,7 +3,7 @@
     "program_id": "coaching-2025-q4",
     "version": "1.0.0",
     "created_at": "2025-11-16",
-    "last_updated": "2025-12-03"
+    "last_updated": "2025-12-17"
   },
   "program": {
     "name": "Q4 2025 Coaching Program",
@@ -12,7 +12,7 @@
     "end_date": null,
     "phase": "baseline",
     "total_weeks": null,
-    "current_week": 2
+    "current_week": 4
   },
   "client": {
     "display_name": "Client",
@@ -57,10 +57,16 @@
       "start_date": "2025-11-30",
       "file": "2025-11-30.json",
       "status": "complete"
+    },
+    {
+      "week_id": "2025-W49-SUN",
+      "start_date": "2025-12-07",
+      "file": "2025-12-07.json",
+      "status": "complete"
     }
   ],
   "_ai_context": {
-    "summary": "Body recomposition program for client starting Q4 2025. Initial focus on establishing baseline metrics, improving sleep from 5.7h to 8h, and normalizing nutrition after travel disruption. Client shows strong training adherence and positive mindset. Week 2 showed breakthrough with PRs and improving trends.",
+    "summary": "Body recomposition program for client starting Q4 2025. Week 4 shows strong subjective performance (9/10 outlook) but WHOOP data reveals underlying stress: 66% avg recovery with one crash day (16%). Two injury concerns (hamstring strain, pec weakness). Sleep averaging 5.8h vs 7.5h target. Stretching routine paying dividends.",
     "phase_description": "Baseline establishment - gathering data and identifying patterns before adjustments",
     "key_focus_areas": [
       "Sleep optimization (current 5.7-6.0h vs 8h target)",
