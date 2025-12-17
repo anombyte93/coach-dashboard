@@ -2279,8 +2279,7 @@
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
 
-    // Email notification config - Google Apps Script webhook URL
-    const NOTIFICATION_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzYOUR_WEBHOOK_ID_HERE/exec';
+    // Email notification config
     const COACH_EMAIL = 'rhys@ironbark.ai';
 
     async function saveCoachResponse(element, questionIndex) {
@@ -2298,8 +2297,8 @@
         const questionCard = element.closest('.coach-question-card');
         const questionText = questionCard.querySelector('.coach-question-text').textContent;
 
-        // Send email notification
-        await sendCoachNotification(questionText, response, weekDate, questionIndex);
+        // Open email notification
+        sendCoachNotification(questionText, response, weekDate, questionIndex);
 
         // Update UI to show saved response
         element.classList.remove('editing');
@@ -2308,7 +2307,6 @@
           <span class="coach-response-text">${response.replace(/\n/g, '<br>')}</span>
           <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400);">
             <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${questionIndex})" style="cursor: pointer; text-decoration: underline;">Edit</span>
-            <span style="margin-left: 0.5rem; color: var(--green);">✓ Sent</span>
           </div>
         `;
       } else {
@@ -2316,10 +2314,9 @@
       }
     }
 
-    async function sendCoachNotification(question, response, weekDate, questionIndex) {
+    function sendCoachNotification(question, response, weekDate, questionIndex) {
       const subject = `Coach Response: Week of ${weekDate} - Q${questionIndex + 1}`;
-      const body = `
-New coach response submitted!
+      const body = `New coach response submitted!
 
 Week: ${weekDate}
 Question #${questionIndex + 1}: ${question}
@@ -2328,31 +2325,11 @@ Response:
 ${response}
 
 ---
-View dashboard: https://anombyte93.github.io/coach-dashboard/v2/
-      `.trim();
+View dashboard: https://anombyte93.github.io/coach-dashboard/v2/`;
 
-      // Try webhook first (Google Apps Script)
-      try {
-        const webhookResponse = await fetch(NOTIFICATION_WEBHOOK, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: COACH_EMAIL,
-            subject: subject,
-            body: body,
-            week: weekDate,
-            question: question,
-            response: response
-          })
-        });
-        console.log('Notification sent via webhook');
-      } catch (e) {
-        console.log('Webhook failed, opening mailto fallback');
-        // Fallback to mailto
-        const mailtoLink = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.open(mailtoLink, '_blank');
-      }
+      // Open email client with pre-filled message
+      const mailtoLink = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoLink;
     }
 
     function cancelCoachResponse(element, questionIndex) {
