@@ -769,11 +769,31 @@
       background: var(--gray-50);
     }
 
-    /* Averages Grid */
+    /* Averages Grid - Structured 2-column layout */
     #averagesGrid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    #averagesGrid .label {
+      color: var(--gray-600);
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    #averagesGrid .value {
+      text-align: right;
+      font-weight: 600;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    #averagesGrid .value .target {
+      color: var(--gray-400);
+      font-weight: 400;
+      font-size: 0.8rem;
     }
 
     .avg-item {
@@ -860,6 +880,15 @@
       border-style: solid;
       border-color: var(--green);
       background: rgba(16, 185, 129, 0.05);
+      cursor: default;
+    }
+
+    .coach-response-area.editing {
+      border-style: solid;
+      border-color: var(--primary);
+      background: white;
+      cursor: default;
+      padding: 0;
     }
 
     .coach-response-placeholder {
@@ -874,12 +903,81 @@
       line-height: 1.5;
     }
 
+    .coach-response-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      resize: vertical;
+      background: transparent;
+    }
+
+    .coach-response-textarea:focus {
+      outline: none;
+    }
+
+    .coach-response-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem 1rem;
+      justify-content: flex-end;
+    }
+
+    .coach-response-actions button {
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .coach-response-actions .btn-save {
+      background: var(--green);
+      color: white;
+    }
+
+    .coach-response-actions .btn-save:hover {
+      background: #059669;
+    }
+
+    .coach-response-actions .btn-cancel {
+      background: var(--gray-200);
+      color: var(--gray-600);
+    }
+
+    .coach-response-actions .btn-cancel:hover {
+      background: var(--gray-300);
+    }
+
     /* MacroFactor-Style Weekly Nutrition Grid */
     .nutrition-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 0.5rem;
       margin-bottom: 1.5rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile: stack 4+3 or scroll horizontally */
+    @media (max-width: 600px) {
+      .nutrition-grid {
+        grid-template-columns: repeat(4, minmax(70px, 1fr));
+        gap: 0.375rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .nutrition-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.375rem;
+      }
     }
 
     .nutrition-day {
@@ -888,6 +986,7 @@
       padding: 0.75rem 0.5rem;
       text-align: center;
       transition: transform 0.2s;
+      min-width: 0;
     }
 
     .nutrition-day:hover {
@@ -921,12 +1020,24 @@
       margin-bottom: 0.25rem;
     }
 
+    @media (max-width: 400px) {
+      .nutrition-day-calories {
+        font-size: 0.95rem;
+      }
+    }
+
     .nutrition-day-macros {
       display: flex;
       flex-direction: column;
       gap: 0.125rem;
       font-size: 0.65rem;
       font-weight: 500;
+    }
+
+    @media (max-width: 400px) {
+      .nutrition-day-macros {
+        font-size: 0.6rem;
+      }
     }
 
     .macro-row {
@@ -1540,6 +1651,7 @@
             : data.nutrition.daily.map(d => d.day);
           renderDashboard();
           renderWeekTabs();
+          loadSavedCoachResponses();
         }
       } catch (e) {
         console.log('Using embedded data for week', weekDate);
@@ -1822,12 +1934,12 @@
 
     if (questions.length > 0) {
       coachQuestions.innerHTML = questions.map((question, index) => `
-        <div class="coach-question-card">
+        <div class="coach-question-card" data-question-index="${index}">
           <div class="coach-question-header">
             <span class="coach-question-number">${index + 1}</span>
             <span class="coach-question-text">${question}</span>
           </div>
-          <div class="coach-response-area" onclick="this.classList.toggle('editing')">
+          <div class="coach-response-area" onclick="openCoachResponse(this, ${index})">
             <span class="coach-response-placeholder">💬 Click to add coach response...</span>
           </div>
         </div>
@@ -2133,6 +2245,108 @@
       }]
     });
     } // End of renderDashboard function
+
+    // ===== COACH RESPONSE FUNCTIONS =====
+    // Store coach responses in localStorage
+    const coachResponses = JSON.parse(localStorage.getItem('coachResponses') || '{}');
+
+    function getResponseKey(weekDate, questionIndex) {
+      return `${weekDate}_q${questionIndex}`;
+    }
+
+    function openCoachResponse(element, questionIndex) {
+      // Don't open if already editing or has response
+      if (element.classList.contains('editing') || element.classList.contains('has-response')) {
+        return;
+      }
+
+      const weekDate = data.weekOf;
+      const key = getResponseKey(weekDate, questionIndex);
+      const existingResponse = coachResponses[key] || '';
+
+      element.classList.add('editing');
+      element.innerHTML = `
+        <textarea class="coach-response-textarea" placeholder="Type your response here..." autofocus>${existingResponse}</textarea>
+        <div class="coach-response-actions">
+          <button class="btn-cancel" onclick="cancelCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Cancel</button>
+          <button class="btn-save" onclick="saveCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Save</button>
+        </div>
+      `;
+
+      // Focus the textarea
+      const textarea = element.querySelector('textarea');
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+
+    function saveCoachResponse(element, questionIndex) {
+      const textarea = element.querySelector('textarea');
+      const response = textarea.value.trim();
+      const weekDate = data.weekOf;
+      const key = getResponseKey(weekDate, questionIndex);
+
+      if (response) {
+        // Save to localStorage
+        coachResponses[key] = response;
+        localStorage.setItem('coachResponses', JSON.stringify(coachResponses));
+
+        // Update UI to show saved response
+        element.classList.remove('editing');
+        element.classList.add('has-response');
+        element.innerHTML = `
+          <span class="coach-response-text">${response.replace(/\n/g, '<br>')}</span>
+          <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400);">
+            <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${questionIndex})" style="cursor: pointer; text-decoration: underline;">Edit</span>
+          </div>
+        `;
+      } else {
+        cancelCoachResponse(element, questionIndex);
+      }
+    }
+
+    function cancelCoachResponse(element, questionIndex) {
+      const weekDate = data.weekOf;
+      const key = getResponseKey(weekDate, questionIndex);
+      const existingResponse = coachResponses[key];
+
+      element.classList.remove('editing');
+
+      if (existingResponse) {
+        element.classList.add('has-response');
+        element.innerHTML = `
+          <span class="coach-response-text">${existingResponse.replace(/\n/g, '<br>')}</span>
+          <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400);">
+            <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${questionIndex})" style="cursor: pointer; text-decoration: underline;">Edit</span>
+          </div>
+        `;
+      } else {
+        element.innerHTML = `<span class="coach-response-placeholder">💬 Click to add coach response...</span>`;
+      }
+    }
+
+    function editCoachResponse(element, questionIndex) {
+      element.classList.remove('has-response');
+      openCoachResponse(element, questionIndex);
+    }
+
+    // Load saved responses on page load
+    function loadSavedCoachResponses() {
+      const weekDate = data.weekOf;
+      document.querySelectorAll('.coach-question-card').forEach((card, index) => {
+        const key = getResponseKey(weekDate, index);
+        const savedResponse = coachResponses[key];
+        if (savedResponse) {
+          const responseArea = card.querySelector('.coach-response-area');
+          responseArea.classList.add('has-response');
+          responseArea.innerHTML = `
+            <span class="coach-response-text">${savedResponse.replace(/\n/g, '<br>')}</span>
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400);">
+              <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${index})" style="cursor: pointer; text-decoration: underline;">Edit</span>
+            </div>
+          `;
+        }
+      });
+    }
 
     // ===== AUTH FUNCTIONS =====
     function logout() {
