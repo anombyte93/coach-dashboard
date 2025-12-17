@@ -10,11 +10,16 @@
     "steps": null
   },
   "training": {
-    "overall_performance": "Strong week - 4 sessions, quality 5/5, mixed focus",
+    "overall_performance": "Strong week - 4 sessions, quality 5/5, mixed focus. PRs: OHP 60→70kg, Triceps 15→25kg",
     "completed": "4 lifting sessions",
-    "difficulty": "Managing around hamstring strain and pec concern",
+    "difficulty": "Managing around hamstring strain (went lighter on legs) and pec concern",
     "recovery": "Variable - one 16% crash day but strong rebounds",
-    "enjoyment": "High - 9/10 outlook score"
+    "enjoyment": "High - 10/10 session, 9/10 outlook score",
+    "prs": [
+      "Overhead Press: 60kg → 70kg",
+      "Triceps: 15kg → 25kg (+10kg)",
+      "Smith Machine: +10kg"
+    ]
   },
   "nutrition": {
     "daily": [
@@ -180,10 +185,12 @@
   },
   "wins": [
     "Hit all planned sessions",
+    "Multiple PRs: OHP 60→70kg, Triceps 15→25kg, Smith +10kg",
     "Sleep consistency improved (except one crash day)",
     "Nutrition compliance high",
     "Stress managed well",
-    "Lots of stretching and increased flexibility"
+    "Lots of stretching and increased flexibility",
+    "10/10 mood and session quality"
   ],
   "coach_questions": "1. What triggered the Dec 12 sleep crash (3.17h)?\n2. How long has hamstring strain been present?\n3. Current bench working weight and where did pec concern start?",
   "_coach_summary": {
