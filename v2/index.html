@@ -2254,6 +2254,30 @@
       return `${weekDate}_q${questionIndex}`;
     }
 
+    // Draft storage for unsaved responses
+    const coachDrafts = JSON.parse(localStorage.getItem('coachDrafts') || '{}');
+
+    function getDraftKey(weekDate, questionIndex) {
+      return `draft_${weekDate}_q${questionIndex}`;
+    }
+
+    function saveDraft(weekDate, questionIndex, text) {
+      const key = getDraftKey(weekDate, questionIndex);
+      coachDrafts[key] = text;
+      localStorage.setItem('coachDrafts', JSON.stringify(coachDrafts));
+    }
+
+    function getDraft(weekDate, questionIndex) {
+      const key = getDraftKey(weekDate, questionIndex);
+      return coachDrafts[key] || '';
+    }
+
+    function clearDraft(weekDate, questionIndex) {
+      const key = getDraftKey(weekDate, questionIndex);
+      delete coachDrafts[key];
+      localStorage.setItem('coachDrafts', JSON.stringify(coachDrafts));
+    }
+
     function openCoachResponse(element, questionIndex) {
       // Don't open if already editing or has response
       if (element.classList.contains('editing') || element.classList.contains('has-response')) {
@@ -2263,24 +2287,33 @@
       const weekDate = data.weekOf;
       const key = getResponseKey(weekDate, questionIndex);
       const existingResponse = coachResponses[key] || '';
+      // Check for draft first, then existing response
+      const draft = getDraft(weekDate, questionIndex);
+      const initialValue = draft || existingResponse;
 
       element.classList.add('editing');
       element.innerHTML = `
-        <textarea class="coach-response-textarea" placeholder="Type your response here..." autofocus>${existingResponse}</textarea>
+        <textarea class="coach-response-textarea" placeholder="Type your response here..." autofocus>${initialValue}</textarea>
         <div class="coach-response-actions">
           <button type="button" class="btn-cancel" onclick="event.stopPropagation(); cancelCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Cancel</button>
           <button type="button" class="btn-save" onclick="event.stopPropagation(); saveCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Save & Notify</button>
         </div>
+        ${draft ? '<div style="font-size: 0.7rem; color: var(--gray-400); padding: 0 1rem;">Draft restored</div>' : ''}
       `;
 
       // Focus the textarea
       const textarea = element.querySelector('textarea');
       textarea.focus();
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+      // Auto-save draft on input
+      textarea.addEventListener('input', () => {
+        saveDraft(weekDate, questionIndex, textarea.value);
+      });
     }
 
-    // Email notification config
-    const COACH_EMAIL = 'rhys@ironbark.ai';
+    // Notification config - ntfy endpoint (Tailscale accessible)
+    const NTFY_ENDPOINT = 'http://100.118.13.31:8889/coach-responses';
 
     async function saveCoachResponse(element, questionIndex) {
       const textarea = element.querySelector('textarea');
@@ -2293,12 +2326,15 @@
         coachResponses[key] = response;
         localStorage.setItem('coachResponses', JSON.stringify(coachResponses));
 
+        // Clear draft since we saved
+        clearDraft(weekDate, questionIndex);
+
         // Get the question text
         const questionCard = element.closest('.coach-question-card');
         const questionText = questionCard.querySelector('.coach-question-text').textContent;
 
-        // Open email notification
-        sendCoachNotification(questionText, response, weekDate, questionIndex);
+        // Send ntfy notification
+        await sendNtfyNotification(questionText, response, weekDate, questionIndex);
 
         // Update UI to show saved response
         element.classList.remove('editing');
@@ -2307,6 +2343,7 @@
           <span class="coach-response-text">${response.replace(/\n/g, '<br>')}</span>
           <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400);">
             <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${questionIndex})" style="cursor: pointer; text-decoration: underline;">Edit</span>
+            <span style="margin-left: 0.5rem; color: var(--green);">✓ Logged</span>
           </div>
         `;
       } else {
@@ -2314,28 +2351,32 @@
       }
     }
 
-    function sendCoachNotification(question, response, weekDate, questionIndex) {
-      const subject = `Coach Response: Week of ${weekDate} - Q${questionIndex + 1}`;
-      const body = `New coach response submitted!
+    async function sendNtfyNotification(question, response, weekDate, questionIndex) {
+      const title = `📋 Coach Response: Week ${weekDate}`;
+      const body = `Q${questionIndex + 1}: ${question.substring(0, 50)}...\n\nResponse:\n${response}`;
 
-Week: ${weekDate}
-Question #${questionIndex + 1}: ${question}
-
-Response:
-${response}
-
----
-View dashboard: https://anombyte93.github.io/coach-dashboard/v2/`;
-
-      // Open email client with pre-filled message
-      const mailtoLink = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailtoLink;
+      try {
+        await fetch(NTFY_ENDPOINT, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Title': title,
+            'Priority': 'high',
+            'Tags': 'clipboard,coach'
+          },
+          body: body
+        });
+        console.log('Notification sent to ntfy');
+      } catch (e) {
+        console.log('ntfy notification failed:', e);
+      }
     }
 
     function cancelCoachResponse(element, questionIndex) {
       const weekDate = data.weekOf;
       const key = getResponseKey(weekDate, questionIndex);
       const existingResponse = coachResponses[key];
+      const hasDraft = getDraft(weekDate, questionIndex);
 
       element.classList.remove('editing');
 
@@ -2347,6 +2388,9 @@ View dashboard: https://anombyte93.github.io/coach-dashboard/v2/`;
             <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${questionIndex})" style="cursor: pointer; text-decoration: underline;">Edit</span>
           </div>
         `;
+      } else if (hasDraft) {
+        // Show that there's a draft saved
+        element.innerHTML = `<span class="coach-response-placeholder">💬 Click to continue draft...</span>`;
       } else {
         element.innerHTML = `<span class="coach-response-placeholder">💬 Click to add coach response...</span>`;
       }
