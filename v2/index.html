@@ -2268,8 +2268,8 @@
       element.innerHTML = `
         <textarea class="coach-response-textarea" placeholder="Type your response here..." autofocus>${existingResponse}</textarea>
         <div class="coach-response-actions">
-          <button class="btn-cancel" onclick="cancelCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Cancel</button>
-          <button class="btn-save" onclick="saveCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Save</button>
+          <button type="button" class="btn-cancel" onclick="event.stopPropagation(); cancelCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Cancel</button>
+          <button type="button" class="btn-save" onclick="event.stopPropagation(); saveCoachResponse(this.closest('.coach-response-area'), ${questionIndex})">Save & Notify</button>
         </div>
       `;
 
@@ -2279,7 +2279,11 @@
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
 
-    function saveCoachResponse(element, questionIndex) {
+    // Email notification config - Google Apps Script webhook URL
+    const NOTIFICATION_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzYOUR_WEBHOOK_ID_HERE/exec';
+    const COACH_EMAIL = 'rhys@ironbark.ai';
+
+    async function saveCoachResponse(element, questionIndex) {
       const textarea = element.querySelector('textarea');
       const response = textarea.value.trim();
       const weekDate = data.weekOf;
@@ -2290,6 +2294,13 @@
         coachResponses[key] = response;
         localStorage.setItem('coachResponses', JSON.stringify(coachResponses));
 
+        // Get the question text
+        const questionCard = element.closest('.coach-question-card');
+        const questionText = questionCard.querySelector('.coach-question-text').textContent;
+
+        // Send email notification
+        await sendCoachNotification(questionText, response, weekDate, questionIndex);
+
         // Update UI to show saved response
         element.classList.remove('editing');
         element.classList.add('has-response');
@@ -2297,10 +2308,50 @@
           <span class="coach-response-text">${response.replace(/\n/g, '<br>')}</span>
           <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--gray-400);">
             <span onclick="editCoachResponse(this.closest('.coach-response-area'), ${questionIndex})" style="cursor: pointer; text-decoration: underline;">Edit</span>
+            <span style="margin-left: 0.5rem; color: var(--green);">✓ Sent</span>
           </div>
         `;
       } else {
         cancelCoachResponse(element, questionIndex);
+      }
+    }
+
+    async function sendCoachNotification(question, response, weekDate, questionIndex) {
+      const subject = `Coach Response: Week of ${weekDate} - Q${questionIndex + 1}`;
+      const body = `
+New coach response submitted!
+
+Week: ${weekDate}
+Question #${questionIndex + 1}: ${question}
+
+Response:
+${response}
+
+---
+View dashboard: https://anombyte93.github.io/coach-dashboard/v2/
+      `.trim();
+
+      // Try webhook first (Google Apps Script)
+      try {
+        const webhookResponse = await fetch(NOTIFICATION_WEBHOOK, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: COACH_EMAIL,
+            subject: subject,
+            body: body,
+            week: weekDate,
+            question: question,
+            response: response
+          })
+        });
+        console.log('Notification sent via webhook');
+      } catch (e) {
+        console.log('Webhook failed, opening mailto fallback');
+        // Fallback to mailto
+        const mailtoLink = `mailto:${COACH_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(mailtoLink, '_blank');
       }
     }
 
