@@ -24,20 +24,35 @@
       }
     })();
   </script>
+  <!-- MacroFactor-inspired Design -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* CSS Variables and Base Styles */
+    /* CSS Variables - MacroFactor Inspired */
     :root {
-      --green: #22c55e;
-      --yellow: #eab308;
+      --primary: #0170B9;
+      --primary-dark: #015a94;
+      --primary-light: #e8f4fc;
+      --green: #10b981;
+      --yellow: #f59e0b;
       --red: #ef4444;
-      --blue: #3b82f6;
       --purple: #8b5cf6;
       --orange: #f97316;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-600: #4b5563;
-      --gray-800: #1f2937;
+      --gray-50: #fafafa;
+      --gray-100: #f5f5f5;
+      --gray-200: #e5e5e5;
+      --gray-300: #d4d4d4;
+      --gray-500: #737373;
+      --gray-600: #525252;
+      --gray-800: #262626;
+      --gray-900: #171717;
+      --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+      --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.08);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 48px;
     }
 
     * {
@@ -47,11 +62,12 @@
     }
 
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--gray-100);
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       color: var(--gray-800);
-      line-height: 1.5;
-      padding: 1rem;
+      line-height: 1.6;
+      padding: 1.5rem;
+      min-height: 100vh;
     }
 
     /* Container */
@@ -60,30 +76,33 @@
       margin: 0 auto;
     }
 
-    /* Header */
+    /* Header - MacroFactor Style */
     header {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
+      padding: 1.5rem 0;
     }
 
     header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--gray-800);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      letter-spacing: -0.025em;
     }
 
     header .week-date {
-      font-size: 0.875rem;
-      color: var(--gray-600);
-      margin-top: 0.25rem;
+      font-size: 1rem;
+      color: var(--gray-500);
+      margin-top: 0.5rem;
+      font-weight: 500;
     }
 
     /* Header Actions */
     .header-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
       justify-content: center;
-      margin-top: 0.75rem;
+      margin-top: 1.25rem;
       flex-wrap: wrap;
     }
 
@@ -91,85 +110,99 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-full);
+      font-size: 0.9rem;
+      font-weight: 600;
       cursor: pointer;
       border: none;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      text-transform: none;
     }
 
     .btn-primary {
-      background: var(--blue);
+      background: var(--primary);
       color: white;
+      box-shadow: 0 2px 8px rgba(1, 112, 185, 0.3);
     }
 
     .btn-primary:hover {
-      background: #2563eb;
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(1, 112, 185, 0.4);
     }
 
     .btn-secondary {
-      background: var(--gray-200);
-      color: var(--gray-800);
+      background: white;
+      color: var(--gray-700);
+      border: 2px solid var(--gray-200);
     }
 
     .btn-secondary:hover {
-      background: #d1d5db;
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
     }
 
     .btn svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
     }
 
-    /* Week Tabs */
+    /* Week Tabs - MacroFactor Style */
     .week-tabs {
       display: flex;
       gap: 0.5rem;
       justify-content: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
-      padding: 0 1rem;
+      padding: 0.5rem;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--card-shadow);
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .week-tab {
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-size: 0.875rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
-      border: 1px solid var(--gray-200);
-      background: white;
-      color: var(--gray-600);
-      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      color: var(--gray-500);
+      transition: all 0.2s ease;
     }
 
     .week-tab:hover {
-      border-color: var(--blue);
-      color: var(--blue);
+      background: var(--gray-100);
+      color: var(--gray-800);
     }
 
     .week-tab.active {
-      background: var(--blue);
+      background: var(--primary);
       color: white;
-      border-color: var(--blue);
+      box-shadow: 0 2px 8px rgba(1, 112, 185, 0.3);
     }
 
     .week-tab.disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
-      background: var(--gray-100);
-      color: var(--gray-600);
+      color: var(--gray-400);
     }
 
     .week-tab.disabled:hover {
-      border-color: var(--gray-200);
-      color: var(--gray-600);
+      background: transparent;
+      color: var(--gray-400);
     }
 
     .week-tab.future {
-      background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+      background: var(--gray-50);
       font-style: italic;
+      color: var(--gray-400);
     }
 
     /* CSV Helper Modal */
@@ -277,12 +310,17 @@
       }
     }
 
-    /* Cards */
+    /* Cards - MacroFactor Style */
     .card {
       background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      padding: 1rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--card-shadow);
+      padding: 1.5rem;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: var(--card-shadow-hover);
     }
 
     /* No data state for cards */
@@ -329,19 +367,19 @@
     }
 
     .card h2 {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--gray-600);
-      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
       text-transform: uppercase;
-      letter-spacing: 0.025em;
+      letter-spacing: 0.05em;
     }
 
     .chart-explainer {
-      font-size: 0.75rem;
-      color: var(--gray-600);
-      margin-bottom: 0.75rem;
-      line-height: 1.4;
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      margin-bottom: 1rem;
+      line-height: 1.5;
     }
 
     /* Chart Container */
@@ -361,44 +399,80 @@
       height: 100% !important;
     }
 
-    /* Recovery Score Card */
+    /* Recovery Score Card - MacroFactor Style */
     .recovery-card {
       text-align: center;
-      padding: 1.5rem;
+      padding: 2rem 1.5rem;
+      background: linear-gradient(135deg, #fafafa 0%, white 100%);
     }
 
     .recovery-score {
-      font-size: 4rem;
+      font-size: 4.5rem;
       font-weight: 700;
       line-height: 1;
+      background: linear-gradient(135deg, var(--green) 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .recovery-score.green { color: var(--green); }
-    .recovery-score.yellow { color: var(--yellow); }
-    .recovery-score.red { color: var(--red); }
-    .recovery-score.blue { color: var(--blue); }
-    .recovery-score.purple { color: var(--purple); }
+    .recovery-score.green {
+      background: linear-gradient(135deg, var(--green) 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .recovery-score.yellow {
+      background: linear-gradient(135deg, var(--yellow) 0%, #d97706 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .recovery-score.red {
+      background: linear-gradient(135deg, var(--red) 0%, #dc2626 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .recovery-score.blue {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .recovery-score.purple {
+      background: linear-gradient(135deg, var(--purple) 0%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .recovery-score::after {
+      content: '%';
+      font-size: 2rem;
+      font-weight: 500;
+      opacity: 0.7;
+    }
 
     /* Insight Card */
     .insight-card {
-      background: linear-gradient(135deg, var(--gray-800) 0%, #374151 100%);
+      background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
       color: white;
-      padding: 1.25rem 1.5rem;
+      padding: 1.5rem 2rem;
       margin-bottom: 1.5rem;
       text-align: center;
+      border-radius: var(--radius-lg);
     }
 
     .insight-card p {
-      font-size: 1.125rem;
+      font-size: 1.1rem;
       font-weight: 500;
-      line-height: 1.5;
+      line-height: 1.6;
       margin: 0;
     }
 
     .recovery-label {
-      font-size: 0.875rem;
-      color: var(--gray-600);
-      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      margin-top: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     /* Measurements Table */
@@ -473,13 +547,435 @@
       font-weight: 400;
     }
 
-    /* Section Headers */
+    /* Section Headers - MacroFactor Style */
     .section-title {
-      font-size: 1.125rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 1.25rem;
+      margin-top: 2.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--primary-light);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    /* Metric Cards - MacroFactor Style */
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.25rem;
+      background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-value.small {
+      font-size: 1.75rem;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-change {
+      font-size: 0.85rem;
       font-weight: 600;
-      margin: 2rem 0 1rem;
-      padding-bottom: 0.5rem;
+      margin-top: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-full);
+    }
+
+    .metric-change.positive {
+      color: var(--green);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .metric-change.negative {
+      color: var(--red);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .metric-change.neutral {
+      color: var(--gray-500);
+      background: var(--gray-100);
+    }
+
+    /* Metric Grid for top summary */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Progress Ring for Recovery */
+    .progress-ring-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .progress-ring {
+      width: 120px;
+      height: 120px;
+      position: relative;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      fill: none;
+      stroke: var(--gray-200);
+      stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .progress-ring-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .progress-ring-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .progress-ring-label {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    /* Note Items - Better Styling */
+    .note-item {
+      padding: 0.875rem 1rem;
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      border-left: 3px solid var(--primary-light);
+      transition: border-color 0.2s;
+    }
+
+    .note-item:hover {
+      border-left-color: var(--primary);
+    }
+
+    .note-label {
+      font-weight: 600;
+      color: var(--gray-700);
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.85rem;
+    }
+
+    .note-value {
+      color: var(--gray-600);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Win Items */
+    .win-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+    }
+
+    .win-item::before {
+      content: '✓';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: var(--green);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Chart Card enhancements */
+    .card .chart-wrap {
+      margin-top: 0.5rem;
+    }
+
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      padding: 0.75rem 0.5rem;
       border-bottom: 2px solid var(--gray-200);
+    }
+
+    td {
+      padding: 0.875rem 0.5rem;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.9rem;
+    }
+
+    tr:hover td {
+      background: var(--gray-50);
+    }
+
+    /* Averages Grid */
+    #averagesGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .avg-item {
+      text-align: center;
+      padding: 1rem 0.5rem;
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+    }
+
+    .avg-item strong {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+    }
+
+    .avg-item span {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    /* Coach Question Cards - Interactive */
+    .coach-question-card {
+      background: white;
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--gray-200);
+      transition: all 0.2s ease;
+    }
+
+    .coach-question-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(1, 112, 185, 0.1);
+    }
+
+    .coach-question-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .coach-question-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .coach-question-text {
+      font-size: 0.95rem;
+      color: var(--gray-800);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .coach-response-area {
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-top: 0.75rem;
+      border: 1px dashed var(--gray-300);
+      min-height: 60px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .coach-response-area:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .coach-response-area.has-response {
+      border-style: solid;
+      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .coach-response-placeholder {
+      color: var(--gray-400);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .coach-response-text {
+      color: var(--gray-700);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* MacroFactor-Style Weekly Nutrition Grid */
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .nutrition-day {
+      background: var(--gray-100);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .nutrition-day:hover {
+      transform: translateY(-2px);
+    }
+
+    .nutrition-day.good {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    }
+
+    .nutrition-day.over {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    }
+
+    .nutrition-day.way-over {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    }
+
+    .nutrition-day-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .nutrition-day-calories {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+    }
+
+    .nutrition-day-macros {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      font-size: 0.65rem;
+      font-weight: 500;
+    }
+
+    .macro-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .macro-p { color: #059669; }
+    .macro-c { color: #d97706; }
+    .macro-f { color: #dc2626; }
+
+    /* Macro Distribution - Better Donut */
+    .macro-donut-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem 0;
+    }
+
+    .macro-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .macro-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .macro-legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .macro-legend-label {
+      font-size: 0.85rem;
+      color: var(--gray-600);
+      min-width: 60px;
+    }
+
+    .macro-legend-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--gray-900);
     }
 
     /* Print Styles */
@@ -672,9 +1168,17 @@
 
     <!-- Nutrition Charts Section -->
     <h3 class="section-title">Nutrition (MacroFactor)</h3>
+
+    <!-- MacroFactor-Style Weekly Grid -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h2>Weekly Overview</h2>
+      <p class="chart-explainer">Daily breakdown with color coding: <span style="color: #059669;">●</span> On target, <span style="color: #d97706;">●</span> Slightly over, <span style="color: #dc2626;">●</span> Way over</p>
+      <div class="nutrition-grid" id="nutritionGrid"></div>
+    </div>
+
     <div class="grid">
       <div class="card">
-        <h2>Daily Calories</h2>
+        <h2>Calorie Trend</h2>
         <p class="chart-explainer">Track intake vs target. Consistent adherence drives body composition changes over time.</p>
         <div class="chart-wrap">
           <canvas id="caloriesChart"></canvas>
@@ -836,8 +1340,8 @@
       // Weeks that have data files
       availableWeeks: ['2025-11-16', '2025-11-23', '2025-11-30', '2025-12-07']
     };
-    // Default to most recent week (last in array)
-    let currentWeekIndex = 3;
+    // Start at -1 so first loadWeek() call always fetches data
+    let currentWeekIndex = -1;
     let chartInstances = {};
 
     // Helper: Calculate days until a week starts
@@ -1065,6 +1569,7 @@
       document.getElementById('wellbeingNotes').innerHTML = '';
       document.getElementById('winsNotes').innerHTML = '';
       document.getElementById('coachQuestions').innerHTML = '';
+      document.getElementById('nutritionGrid').innerHTML = '';
 
       // Reset recovery score classes
       const recoveryEl = document.getElementById('recoveryScore');
@@ -1232,6 +1737,28 @@
       `;
     });
 
+    // MacroFactor-Style Nutrition Grid
+    const nutritionGrid = document.getElementById('nutritionGrid');
+    const targetCals = data.nutrition.targets.calories;
+    nutritionGrid.innerHTML = data.nutrition.daily.map(day => {
+      const calsPercent = (day.calories / targetCals) * 100;
+      let colorClass = 'good';
+      if (calsPercent > 115) colorClass = 'way-over';
+      else if (calsPercent > 105) colorClass = 'over';
+
+      return `
+        <div class="nutrition-day ${colorClass}">
+          <div class="nutrition-day-label">${day.day}</div>
+          <div class="nutrition-day-calories">${day.calories}</div>
+          <div class="nutrition-day-macros">
+            <span class="macro-p">${day.protein}P</span>
+            <span class="macro-c">${day.carbs}C</span>
+            <span class="macro-f">${day.fat}F</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
     // Nutrition Notes
     const nutritionNotes = document.getElementById('nutritionNotes');
     nutritionNotes.innerHTML = `
@@ -1277,43 +1804,77 @@
       `;
     });
 
-    // Wins Notes
+    // Wins Notes - Better styled
     const winsNotes = document.getElementById('winsNotes');
     data.wins.forEach(win => {
       winsNotes.innerHTML += `
-        <div class="note-item">
-          <span class="note-value">✓ ${win}</span>
+        <div class="win-item">
+          <span class="note-value">${win}</span>
         </div>
       `;
     });
 
-    // Coach Questions
+    // Coach Questions - Parse and render as individual cards
     const coachQuestions = document.getElementById('coachQuestions');
-    coachQuestions.innerHTML = `
-      <div class="note-item">
-        <span class="note-value">${data.coach_questions}</span>
-      </div>
-    `;
+    const questionsText = data.coach_questions || '';
+    // Split by numbered pattern (1. or 1) or newlines)
+    const questions = questionsText.split(/\n/).filter(q => q.trim()).map(q => q.replace(/^\d+[\.\)]\s*/, '').trim());
 
-    // Chart defaults
-    Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
-    Chart.defaults.font.size = 11;
-    Chart.defaults.color = '#4b5563';
+    if (questions.length > 0) {
+      coachQuestions.innerHTML = questions.map((question, index) => `
+        <div class="coach-question-card">
+          <div class="coach-question-header">
+            <span class="coach-question-number">${index + 1}</span>
+            <span class="coach-question-text">${question}</span>
+          </div>
+          <div class="coach-response-area" onclick="this.classList.toggle('editing')">
+            <span class="coach-response-placeholder">💬 Click to add coach response...</span>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      coachQuestions.innerHTML = `
+        <div class="note-item">
+          <span class="note-value" style="color: var(--gray-400); font-style: italic;">No questions this week</span>
+        </div>
+      `;
+    }
+
+    // Chart defaults - MacroFactor Style
+    Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.font.weight = 500;
+    Chart.defaults.color = '#737373';
 
     const chartOptions = {
       responsive: true,
       maintainAspectRatio: true,
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#262626',
+          titleFont: { size: 13, weight: 600 },
+          bodyFont: { size: 12 },
+          padding: 12,
+          cornerRadius: 8,
+          displayColors: false
+        }
       },
       scales: {
         x: {
-          grid: { display: false }
+          grid: { display: false },
+          ticks: { font: { size: 11, weight: 500 } }
         },
         y: {
           beginAtZero: false,
-          grid: { color: '#e5e7eb' }
+          grid: { color: 'rgba(0,0,0,0.06)', drawBorder: false },
+          ticks: { font: { size: 11 }, padding: 8 }
         }
+      },
+      elements: {
+        bar: { borderRadius: 6 },
+        line: { tension: 0.4 },
+        point: { radius: 4, hoverRadius: 6 }
       }
     };
 
@@ -1344,13 +1905,13 @@
           {
             label: 'HRV',
             data: data.whoop.daily.map(d => d.hrv),
-            borderColor: '#3b82f6',
+            borderColor: '#0170B9',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             borderWidth: 2,
             fill: false,
             tension: 0.3,
             pointRadius: 4,
-            pointBackgroundColor: '#3b82f6'
+            pointBackgroundColor: '#0170B9'
           }
         ]
       },
@@ -1529,7 +2090,7 @@
             data.nutrition.averages.carbs,
             data.nutrition.averages.fat
           ],
-          backgroundColor: ['#3b82f6', '#eab308', '#ef4444'],
+          backgroundColor: ['#0170B9', '#f59e0b', '#ef4444'],
           borderWidth: 0
         }]
       },
@@ -1593,10 +2154,10 @@
     }
 
     // ===== INITIALIZATION =====
-    // Check admin role and render dashboard
+    // Check admin role and load most recent week
     checkAdminRole();
-    renderWeekTabs();
-    renderDashboard();
+    // Load Week 4 (index 3) - this will fetch data AND render
+    loadWeek(3);
 
     // Expose current week data for chat widget
     window.currentWeekData = data;
