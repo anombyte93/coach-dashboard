@@ -7,7 +7,7 @@
 
 NTFY_TOPIC="http://localhost:8889/coach-responses/json"
 LOG_FILE="$HOME/.claude/logs/coach-responses.jsonl"
-EMAIL_TO="rhys@ironbark.ai"
+EMAIL_TO="hayden.bruinsma@gmail.com"
 
 mkdir -p "$(dirname "$LOG_FILE")"
 

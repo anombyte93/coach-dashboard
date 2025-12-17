@@ -4,7 +4,7 @@
 
 SUBJECT="${1:-Coach Response}"
 BODY="${2:-New coach response received}"
-EMAIL_TO="rhys@ironbark.ai"
+EMAIL_TO="hayden.bruinsma@gmail.com"
 
 # Find Claude session
 CLAUDE_SESSION=$(tmux list-sessions -F '#{session_name}' 2>/dev/null | grep -E '^(claude|den|main)' | head -1)
