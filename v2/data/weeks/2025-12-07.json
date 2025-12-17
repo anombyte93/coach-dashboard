@@ -10,15 +10,17 @@
     "steps": 67956
   },
   "training": {
-    "overall_performance": "Strong week - 4 sessions, quality 5/5, mixed focus. PRs: OHP 60→70kg, Triceps 15→25kg",
+    "overall_performance": "Strong week - 4 sessions, quality 5/5, mixed focus. Multiple compound and isolation PRs achieved",
     "completed": "4 lifting sessions",
     "difficulty": "Managing around hamstring strain (went lighter on legs) and pec concern",
     "recovery": "Variable - one 16% crash day but strong rebounds",
     "enjoyment": "High - 10/10 session, 9/10 outlook score",
     "prs": [
-      "Overhead Press: 60kg → 70kg",
-      "Triceps: 15kg → 25kg (+10kg)",
-      "Smith Machine: +10kg"
+      "Squat PR (details in coach app)",
+      "Bench PR (details in coach app)",
+      "Deadlift PR (details in coach app)",
+      "OHP: 60kg → 70kg (+10kg on Smith Machine)",
+      "Skull Crushers: 15kg → 25kg (+10kg)"
     ]
   },
   "nutrition": {
@@ -30,7 +32,7 @@
         "protein": 251,
         "carbs": 546,
         "fat": 114,
-        "steps": null
+        "steps": 9708
       },
       {
         "day": "Mon",
@@ -39,7 +41,7 @@
         "protein": 249,
         "carbs": 536,
         "fat": 154,
-        "steps": null
+        "steps": 9708
       },
       {
         "day": "Tue",
@@ -48,7 +50,7 @@
         "protein": 216,
         "carbs": 536,
         "fat": 173,
-        "steps": null
+        "steps": 9708
       },
       {
         "day": "Wed",
@@ -57,7 +59,7 @@
         "protein": 214,
         "carbs": 222,
         "fat": 47,
-        "steps": null
+        "steps": 9708
       },
       {
         "day": "Thu",
@@ -66,7 +68,7 @@
         "protein": 219,
         "carbs": 262,
         "fat": 93,
-        "steps": null
+        "steps": 9708
       },
       {
         "day": "Fri",
@@ -75,7 +77,7 @@
         "protein": 249,
         "carbs": 240,
         "fat": 75,
-        "steps": null
+        "steps": 9708
       },
       {
         "day": "Sat",
@@ -84,7 +86,7 @@
         "protein": 252,
         "carbs": 206,
         "fat": 158,
-        "steps": null
+        "steps": 9708
       }
     ],
     "averages": {
@@ -176,23 +178,23 @@
   },
   "wellbeing": {
     "pain": "Hamstring strain (ongoing, managing around it)",
-    "appetite": "Normal",
-    "cravings": "None noted",
+    "appetite": "Higher than normal",
+    "cravings": "Higher than normal - finding it difficult to stick to recommended calories",
     "stress": "Managed well",
     "mood": "Excellent - 9/10 outlook",
     "recovery_outside_gym": "Stretching routine paying dividends",
-    "lifestyle_factors": "Pec weakness concern from aggressive bench progression"
+    "lifestyle_factors": "Keeping fat low, salads for lunch/dinner, high-protein banana bread for breakfast, rice cakes throughout day. Hydration excellent at 4-5L water/day"
   },
   "wins": [
     "Hit all planned sessions",
-    "Multiple PRs: OHP 60→70kg, Triceps 15→25kg, Smith +10kg",
-    "Sleep consistency improved (except one crash day)",
-    "Nutrition compliance high",
+    "Multiple PRs: OHP 60→70kg (+10kg on Smith Machine), Skull Crushers 15→25kg (+10kg), Squat PR, Bench PR, Deadlift PR",
+    "Nutrition: Eating healthy foods, keeping fat low, salads for lunch/dinner, high-protein banana bread for breakfast",
+    "Hydration on point: 4-5 litres water per day",
     "Stress managed well",
     "Lots of stretching and increased flexibility",
     "10/10 mood and session quality"
   ],
-  "coach_questions": "1. What triggered the Dec 12 sleep crash (3.17h)?\n2. How long has hamstring strain been present?\n3. Current bench working weight and where did pec concern start?",
+  "coach_questions": "1. How should I work around the hamstring strain during training?\n2. What weights should I be doing for my big compound lifts (squat, bench, deadlift) to avoid injuries? I can gauge isolation movements fine but with compounds I keep pushing more because I know I can, then run into issues. Need guidance on appropriate working weights so I don't get ahead of myself.",
   "_coach_summary": {
     "executive_summary": "Strong subjective week (9/10 outlook, exceptional training quality) but WHOOP reveals underlying stress: 66% avg recovery with one 16% crash day. Two injury concerns (hamstring strain, pec weakness) combined with 5.8h sleep avg and 14.3 strain suggests riding momentum at the edge of overreaching. The stretching habit is paying dividends - keep it.",
     "risk_flags": [

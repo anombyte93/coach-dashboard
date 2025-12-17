@@ -834,9 +834,10 @@
       // All possible weeks to display (Sunday dates)
       allWeeks: ['2025-11-16', '2025-11-23', '2025-11-30', '2025-12-07'],
       // Weeks that have data files
-      availableWeeks: ['2025-11-16', '2025-11-23', '2025-11-30']
+      availableWeeks: ['2025-11-16', '2025-11-23', '2025-11-30', '2025-12-07']
     };
-    let currentWeekIndex = 0;
+    // Default to most recent week (last in array)
+    let currentWeekIndex = 3;
     let chartInstances = {};
 
     // Helper: Calculate days until a week starts
@@ -1383,7 +1384,7 @@
         ...chartOptions,
         scales: {
           ...chartOptions.scales,
-          y: { ...chartOptions.scales.y, min: 65, max: 80 }
+          y: { ...chartOptions.scales.y, min: 55, max: 75 }
         }
       }
     });
@@ -1487,7 +1488,7 @@
         ...chartOptions,
         scales: {
           ...chartOptions.scales,
-          y: { ...chartOptions.scales.y, min: 2500, max: 3800 }
+          y: { ...chartOptions.scales.y, min: 1800, max: 4800 }
         },
         plugins: {
           ...chartOptions.plugins,
