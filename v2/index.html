@@ -1648,6 +1648,11 @@
       return placeholders;
     }
 
+    function formatMaybe(value, suffix = '') {
+      if (value === null || value === undefined || Number.isNaN(value)) return '—';
+      return `${value}${suffix}`;
+    }
+
     function normalizeWeekData(raw) {
       // If already in legacy schema, return as-is
       if (raw && raw.weekOf && raw.measurements && raw.nutrition && raw.whoop) {
@@ -1664,6 +1669,15 @@
         const training = raw.training || {};
         const reflection = raw.reflection || {};
         const coachSummary = raw.coach_summary || {};
+        const avgCalories = macro.avg_calories || 0;
+        const avgProtein = macro.avg_protein_g || 0;
+        const avgCarbs = macro.avg_carbs_g || 0;
+        const avgFat = macro.avg_fat_g || 0;
+        const avgHrv = whoop.hrv_ms || 0;
+        const avgRhr = whoop.rhr_bpm || 0;
+        const avgSleep = whoop.avg_sleep_hours || 0;
+        const avgStrain = whoop.avg_strain || 0;
+        const avgRecovery = whoop.recovery_pct || 0;
 
         return {
           weekOf: startDate,
@@ -1684,12 +1698,19 @@
             enjoyment: training.quality ? `Quality ${training.quality}/5` : ''
           },
           nutrition: {
-            daily: placeholders.map(p => ({ ...p, calories: 0, protein: 0, carbs: 0, fat: 0, steps: 0 })),
+            daily: placeholders.map(p => ({
+              ...p,
+              calories: avgCalories,
+              protein: avgProtein,
+              carbs: avgCarbs,
+              fat: avgFat,
+              steps: 0
+            })),
             averages: {
-              calories: macro.avg_calories || 0,
-              protein: macro.avg_protein_g || 0,
-              carbs: macro.avg_carbs_g || 0,
-              fat: macro.avg_fat_g || 0
+              calories: avgCalories,
+              protein: avgProtein,
+              carbs: avgCarbs,
+              fat: avgFat
             },
             targets: {
               calories: 2725,
@@ -1700,16 +1721,23 @@
             notes: macro.note || reflection.win_details || ''
           },
           whoop: {
-            daily: placeholders.map(p => ({ ...p, hrv: 0, rhr: 0, sleep: 0, strain: 0, recovery: 0 })),
+            daily: placeholders.map(p => ({
+              ...p,
+              hrv: avgHrv,
+              rhr: avgRhr,
+              sleep: avgSleep,
+              strain: avgStrain,
+              recovery: avgRecovery
+            })),
             averages: {
-              hrv: whoop.hrv_ms || 0,
-              rhr: whoop.rhr_bpm || 0,
-              sleep: whoop.avg_sleep_hours || 0,
-              strain: whoop.avg_strain || 0,
-              recovery: whoop.recovery_pct || 0
+              hrv: avgHrv,
+              rhr: avgRhr,
+              sleep: avgSleep,
+              strain: avgStrain,
+              recovery: avgRecovery
             },
             sleep_metrics: {
-              avg_duration: whoop.avg_sleep_hours || 0,
+              avg_duration: avgSleep,
               avg_efficiency: whoop.sleep_performance_pct || 0,
               avg_need: 0,
               avg_debt: 0,
@@ -1844,8 +1872,8 @@
     document.getElementById('avgCalories').textContent = data.nutrition.averages.calories.toLocaleString();
 
     // Avg Steps Card (daily average from weekly total)
-    const avgSteps = Math.round(data.measurements.steps / 7);
-    document.getElementById('avgSteps').textContent = avgSteps.toLocaleString();
+    const avgSteps = data.measurements.steps > 0 ? Math.round(data.measurements.steps / 7) : null;
+    document.getElementById('avgSteps').textContent = avgSteps !== null ? avgSteps.toLocaleString() : '—';
 
     // AI Insight - Generate based on data
     function generateInsight() {
@@ -1900,13 +1928,13 @@
 
     // Measurements Table
     const measurementsData = [
-      { label: 'Weight', value: `${data.measurements.weight} kg`, highlight: true },
-      { label: 'Waist', value: `${data.measurements.waist} cm` },
-      { label: 'Chest', value: `${data.measurements.chest} cm` },
-      { label: 'Middle', value: `${data.measurements.middle} cm` },
-      { label: 'Butt', value: `${data.measurements.butt} cm` },
-      { label: 'Leg', value: `${data.measurements.leg} cm` },
-      { label: 'Weekly Steps', value: data.measurements.steps.toLocaleString() }
+      { label: 'Weight', value: formatMaybe(data.measurements.weight, ' kg'), highlight: true },
+      { label: 'Waist', value: formatMaybe(data.measurements.waist, ' cm') },
+      { label: 'Chest', value: formatMaybe(data.measurements.chest, ' cm') },
+      { label: 'Middle', value: formatMaybe(data.measurements.middle, ' cm') },
+      { label: 'Butt', value: formatMaybe(data.measurements.butt, ' cm') },
+      { label: 'Leg', value: formatMaybe(data.measurements.leg, ' cm') },
+      { label: 'Weekly Steps', value: data.measurements.steps > 0 ? data.measurements.steps.toLocaleString() : '—' }
     ];
 
     const tbody = document.querySelector('#measurementsTable tbody');
