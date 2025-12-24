@@ -1,0 +1,176 @@
+{
+  "weekOf": "2025-11-17",
+  "measurements": {
+    "weight": 116,
+    "waist": 86,
+    "chest": 120,
+    "middle": 102,
+    "butt": 110,
+    "leg": 68,
+    "steps": 56042
+  },
+  "training": {
+    "overall_performance": "Good energy, strong sessions",
+    "completed": "3 workouts (skipped full body)",
+    "difficulty": "Squats tight, rest good",
+    "recovery": "Good but sore",
+    "enjoyment": "Loved the training"
+  },
+  "nutrition": {
+    "daily": [
+      {
+        "day": "Mon",
+        "calories": 3200,
+        "protein": 165,
+        "carbs": 340,
+        "fat": 180
+      },
+      {
+        "day": "Tue",
+        "calories": 3500,
+        "protein": 175,
+        "carbs": 370,
+        "fat": 195
+      },
+      {
+        "day": "Wed",
+        "calories": 3400,
+        "protein": 170,
+        "carbs": 355,
+        "fat": 188
+      },
+      {
+        "day": "Thu",
+        "calories": 3600,
+        "protein": 180,
+        "carbs": 380,
+        "fat": 200
+      },
+      {
+        "day": "Fri",
+        "calories": 3300,
+        "protein": 168,
+        "carbs": 345,
+        "fat": 182
+      },
+      {
+        "day": "Sat",
+        "calories": 3550,
+        "protein": 175,
+        "carbs": 375,
+        "fat": 195
+      },
+      {
+        "day": "Sun",
+        "calories": 3580,
+        "protein": 171,
+        "carbs": 355,
+        "fat": 190
+      }
+    ],
+    "averages": {
+      "calories": 3447,
+      "protein": 172,
+      "carbs": 360,
+      "fat": 190
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 314,
+      "fat": 102
+    },
+    "notes": "126% of calorie target due to travel + takeaway. Protein improving (88% of target). Fat elevated from convenience foods. Hydration low. Focus: meal prep, protein-first, 3L+ water daily."
+  },
+  "whoop": {
+    "daily": [
+      {
+        "day": "Mon",
+        "hrv": 45,
+        "rhr": 74,
+        "sleep": 5.5,
+        "strain": 12.0,
+        "recovery": 52
+      },
+      {
+        "day": "Tue",
+        "hrv": 48,
+        "rhr": 72,
+        "sleep": 6.2,
+        "strain": 14.5,
+        "recovery": 58
+      },
+      {
+        "day": "Wed",
+        "hrv": 42,
+        "rhr": 75,
+        "sleep": 5.0,
+        "strain": 10.2,
+        "recovery": 48
+      },
+      {
+        "day": "Thu",
+        "hrv": 50,
+        "rhr": 71,
+        "sleep": 6.8,
+        "strain": 13.8,
+        "recovery": 62
+      },
+      {
+        "day": "Fri",
+        "hrv": 47,
+        "rhr": 73,
+        "sleep": 5.8,
+        "strain": 11.5,
+        "recovery": 55
+      },
+      {
+        "day": "Sat",
+        "hrv": 49,
+        "rhr": 72,
+        "sleep": 5.3,
+        "strain": 9.8,
+        "recovery": 60
+      },
+      {
+        "day": "Sun",
+        "hrv": 48,
+        "rhr": 73,
+        "sleep": 5.5,
+        "strain": 9.4,
+        "recovery": 64
+      }
+    ],
+    "averages": {
+      "hrv": 47,
+      "rhr": 73,
+      "sleep": 5.7,
+      "strain": 11.6,
+      "recovery": 57
+    },
+    "sleep_metrics": {
+      "avg_duration": 5.7,
+      "avg_efficiency": 97,
+      "avg_need": 8.9,
+      "avg_debt": 58,
+      "consistency": 51
+    },
+    "interpretation": "Moderate recovery (57%) with high strain and significant sleep deficit. Averaging 5.7h vs 8.9h need. RHR elevated at 73 bpm. Routine disruption affecting sleep consistency (51%). Priority: improve sleep duration to support recovery."
+  },
+  "wellbeing": {
+    "pain": "Minor soreness - normal training soreness",
+    "appetite": "Good - normal appetite, no issues",
+    "cravings": "Some cravings for sugar/junk",
+    "stress": "Very high - travel, social events, work pressure",
+    "mood": "Anxious/stressed - mind racing",
+    "recovery_outside_gym": "Good - did recovery work",
+    "lifestyle_factors": "Travel, social events, work stress all impacting routine"
+  },
+  "wins": [
+    "Consistency win - stuck to plan despite challenges",
+    "Mindset win - mental breakthrough",
+    "Got more protein!",
+    "Worked super hard and smashed legs"
+  ],
+  "coach_questions": "What should I be doing when I get cravings? I find if I fast in the morning it helps me not overeat."
+}

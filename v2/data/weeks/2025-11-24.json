@@ -1,0 +1,178 @@
+{
+  "weekOf": "2025-11-24",
+  "measurements": {
+    "weight": null,
+    "waist": null,
+    "chest": null,
+    "middle": null,
+    "butt": null,
+    "leg": null,
+    "steps": 65874
+  },
+  "training": {
+    "overall_performance": "Excellent - hit Squat and Bench PRs!",
+    "completed": "3 sessions",
+    "difficulty": "Felt strong throughout",
+    "recovery": "Low fatigue, good recovery",
+    "enjoyment": "High - flexibility improvements showing in lifts"
+  },
+  "nutrition": {
+    "daily": [
+      {
+        "day": "Sun",
+        "date": "2025-11-23",
+        "calories": 3733,
+        "protein": 213,
+        "carbs": 336,
+        "fat": 175,
+        "steps": 6149
+      },
+      {
+        "day": "Mon",
+        "date": "2025-11-24",
+        "calories": 1927,
+        "protein": 117,
+        "carbs": 158,
+        "fat": 95,
+        "steps": 8063
+      },
+      {
+        "day": "Tue",
+        "date": "2025-11-25",
+        "calories": 2677,
+        "protein": 132,
+        "carbs": 298,
+        "fat": 110,
+        "steps": 4656
+      },
+      {
+        "day": "Wed",
+        "date": "2025-11-26",
+        "calories": 2709,
+        "protein": 133,
+        "carbs": 236,
+        "fat": 138,
+        "steps": 10330
+      },
+      {
+        "day": "Thu",
+        "date": "2025-11-27",
+        "calories": 2567,
+        "protein": 116,
+        "carbs": 288,
+        "fat": 104,
+        "steps": 7448
+      },
+      {
+        "day": "Fri",
+        "date": "2025-11-28",
+        "calories": 2720,
+        "protein": 188,
+        "carbs": 277,
+        "fat": 112,
+        "steps": 17662
+      },
+      {
+        "day": "Sat",
+        "date": "2025-11-29",
+        "calories": 3699,
+        "protein": 227,
+        "carbs": 293,
+        "fat": 169,
+        "steps": 11566
+      }
+    ],
+    "averages": {
+      "calories": 2862,
+      "protein": 161,
+      "carbs": 269,
+      "fat": 129
+    },
+    "targets": {
+      "calories": 2725,
+      "protein": 195,
+      "carbs": 295,
+      "fat": 85
+    },
+    "notes": "105% of calorie target (2862 avg). Protein at 83% (161g avg). Steps: 65,874 total."
+  },
+  "whoop": {
+    "daily": [
+      {
+        "day": "Sun",
+        "date": "2025-11-23",
+        "hrv": 60,
+        "rhr": 64,
+        "sleep": 1.4,
+        "strain": 13.8,
+        "recovery": 15
+      },
+      {
+        "day": "Mon",
+        "date": "2025-11-24",
+        "hrv": 49,
+        "rhr": 71,
+        "sleep": 7.3,
+        "strain": 11.7,
+        "recovery": 87
+      },
+      {
+        "day": "Wed",
+        "date": "2025-11-26",
+        "hrv": 44,
+        "rhr": 72,
+        "sleep": 7.6,
+        "strain": 13.4,
+        "recovery": 81
+      },
+      {
+        "day": "Fri",
+        "date": "2025-11-28",
+        "hrv": 41,
+        "rhr": 66,
+        "sleep": 5.5,
+        "strain": 16.4,
+        "recovery": 67
+      },
+      {
+        "day": "Sat",
+        "date": "2025-11-29",
+        "hrv": 40,
+        "rhr": 74,
+        "sleep": 8.2,
+        "strain": 0,
+        "recovery": 71
+      }
+    ],
+    "averages": {
+      "hrv": 47,
+      "rhr": 69,
+      "sleep": 6.0,
+      "strain": 11.1,
+      "recovery": 64
+    },
+    "sleep_metrics": {
+      "avg_duration": 6.0,
+      "avg_efficiency": 90,
+      "avg_need": 8.0,
+      "avg_debt": 0,
+      "consistency": 60
+    },
+    "interpretation": "Moderate recovery (64%) with avg 6.0h sleep. Variable recovery (15-87%). Strain moderate at 11.1. Strong performance despite Sunday low."
+  },
+  "wellbeing": {
+    "pain": "Mild (2-3) - not limiting training",
+    "appetite": "Normal",
+    "cravings": "Minimal",
+    "stress": "Low (0-2) - feeling calm",
+    "mood": "Neutral (5-6)",
+    "recovery_outside_gym": "Good",
+    "lifestyle_factors": "Flexibility work making big difference"
+  },
+  "wins": [
+    "Squat PR!",
+    "Bench PR!",
+    "Flexibility making massive difference in performance"
+  ],
+  "coach_questions": ""
+}
