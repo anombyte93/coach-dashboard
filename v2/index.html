@@ -1476,6 +1476,7 @@
 
     // Load embedded JSON data (fallback/default)
     let data = JSON.parse(document.getElementById('dashboardData').textContent);
+    data = normalizeWeekData(data);
     // Use WHOOP days if available, otherwise fall back to nutrition days
     let days = (data.whoop.daily && data.whoop.daily.length > 0)
       ? data.whoop.daily.map(d => d.day)
@@ -1633,6 +1634,93 @@
       });
     }
 
+    function normalizeWeekData(raw) {
+      // If already in legacy schema, return as-is
+      if (raw && raw.weekOf && raw.measurements && raw.nutrition && raw.whoop) {
+        return raw;
+      }
+
+      // Handle schema v2 (weekly summary format)
+      if (raw && (raw.schema_version || raw.week_label || raw.context)) {
+        const startDate = raw.context?.start_date || raw.week_label?.split(' ')[0] || null;
+        const whoop = raw.whoop || {};
+        const macro = raw.macrofactor || {};
+        const wellbeing = raw.wellbeing || {};
+        const training = raw.training || {};
+        const reflection = raw.reflection || {};
+        const coachSummary = raw.coach_summary || {};
+
+        return {
+          weekOf: startDate,
+          measurements: {
+            weight: null,
+            waist: null,
+            chest: null,
+            middle: null,
+            butt: null,
+            leg: null,
+            steps: 0
+          },
+          training: {
+            overall_performance: training.notes || '',
+            completed: training.sessions ? `${training.sessions} sessions` : '',
+            difficulty: '',
+            recovery: '',
+            enjoyment: training.quality ? `Quality ${training.quality}/5` : ''
+          },
+          nutrition: {
+            daily: [],
+            averages: {
+              calories: macro.avg_calories || 0,
+              protein: macro.avg_protein_g || 0,
+              carbs: macro.avg_carbs_g || 0,
+              fat: macro.avg_fat_g || 0
+            },
+            targets: {
+              calories: 2725,
+              protein: 195,
+              carbs: 314,
+              fat: 102
+            },
+            notes: macro.note || ''
+          },
+          whoop: {
+            daily: [],
+            averages: {
+              hrv: whoop.hrv_ms || 0,
+              rhr: whoop.rhr_bpm || 0,
+              sleep: whoop.avg_sleep_hours || 0,
+              strain: whoop.avg_strain || 0,
+              recovery: whoop.recovery_pct || 0
+            },
+            sleep_metrics: {
+              avg_duration: whoop.avg_sleep_hours || 0,
+              avg_efficiency: whoop.sleep_performance_pct || 0,
+              avg_need: 0,
+              avg_debt: 0,
+              consistency: 0
+            },
+            interpretation: coachSummary.executive_summary || ''
+          },
+          wellbeing: {
+            pain: wellbeing.injuries || '',
+            appetite: '',
+            cravings: '',
+            stress: '',
+            mood: '',
+            recovery_outside_gym: wellbeing.recovery ? `Recovery: ${wellbeing.recovery}/5` : '',
+            lifestyle_factors: wellbeing.injury_detail || ''
+          },
+          wins: reflection.wins || [],
+          coach_questions: Array.isArray(coachSummary.questions_for_coach)
+            ? coachSummary.questions_for_coach.join(' ')
+            : ''
+        };
+      }
+
+      return raw || {};
+    }
+
     async function loadWeek(index) {
       if (index === currentWeekIndex) return; // Already loaded
       if (index < 0 || index >= WEEK_CONFIG.availableWeeks.length) return;
@@ -1644,7 +1732,7 @@
         // Try to load from data/weeks/ directory
         const response = await fetch(`data/weeks/${weekDate}.json`);
         if (response.ok) {
-          data = await response.json();
+          data = normalizeWeekData(await response.json());
           // Use WHOOP days if available, otherwise fall back to nutrition days
           days = (data.whoop.daily && data.whoop.daily.length > 0)
             ? data.whoop.daily.map(d => d.day)
