@@ -1,112 +1,100 @@
 {
-  "week_label": "2025-12-15 Week",
-  "schema_version": "2.0",
-  "context": {
-    "start_date": "2025-12-15",
-    "end_date": "2025-12-21",
-    "generated_at": "2025-12-24T11:30:00+08:00"
+  "weekOf": "2025-12-15",
+  "measurements": {
+    "steps": 82994,
+    "weight": 109.4,
+    "waist": 95.0,
+    "chest": 118.0,
+    "butt": 108.5,
+    "leg": 66.0,
+    "middle": 106.5
   },
-  "data_sources": {
-    "whoop": "auto-imported",
-    "macrofactor": "manual-import",
-    "reflection": "user input",
-    "wellbeing": "user input",
-    "training": "user input"
-  },
-  "opening": {
-    "outlook_score": 9,
-    "context_type": "success",
-    "context_answer": "Consistent training"
-  },
-  "reflection": {
-    "wins": ["Hit planned sessions", "PR or strength gain", "Diet compliance (mostly)"],
-    "win_details": "4 exceptional training sessions with PRs, diet on point until end of week",
-    "barriers": ["Energy/fatigue", "Life stress/holidays", "Food cravings/boredom", "Meal planning gaps"],
-    "main_barrier": "Food cravings and meal boredom - not planning appropriately"
+  "nutrition": {
+    "daily": [
+      {
+        "day": "Mon",
+        "date": "2025-12-15",
+        "calories": 5241,
+        "protein": 285,
+        "carbs": 608,
+        "fat": 184,
+        "steps": 8930
+      },
+      {
+        "day": "Tue",
+        "date": "2025-12-16",
+        "calories": 3269,
+        "protein": 279,
+        "carbs": 353,
+        "fat": 84,
+        "steps": 9083
+      },
+      {
+        "day": "Wed",
+        "date": "2025-12-17",
+        "calories": 3167,
+        "protein": 237,
+        "carbs": 363,
+        "fat": 83,
+        "steps": 12936
+      },
+      {
+        "day": "Thu",
+        "date": "2025-12-18",
+        "calories": 2675,
+        "protein": 196,
+        "carbs": 330,
+        "fat": 67,
+        "steps": 10713
+      },
+      {
+        "day": "Fri",
+        "date": "2025-12-19",
+        "calories": 2634,
+        "protein": 168,
+        "carbs": 364,
+        "fat": 51,
+        "steps": 10744
+      },
+      {
+        "day": "Sat",
+        "date": "2025-12-20",
+        "calories": 2637,
+        "protein": 195,
+        "carbs": 341,
+        "fat": 55,
+        "steps": 16939
+      },
+      {
+        "day": "Sun",
+        "date": "2025-12-21",
+        "calories": 3061,
+        "protein": 214,
+        "carbs": 398,
+        "fat": 65,
+        "steps": 13649
+      }
+    ],
+    "averages": {
+      "calories": 3241,
+      "protein": 225,
+      "carbs": 394,
+      "fat": 84
+    },
+    "targets": {
+      "calories": 2650,
+      "protein": 195,
+      "carbs": 265,
+      "fat": 90
+    },
+    "notes": "122% of calorie target (3241 avg). Protein at 115% (225g avg). Steps: 82,994 total."
   },
   "whoop": {
-    "recovery_pct": 59,
-    "hrv_ms": 48,
-    "rhr_bpm": 62,
-    "avg_strain": 13.4,
-    "avg_sleep_hours": 7.1,
-    "sleep_performance_pct": 74,
-    "days_green": 2,
-    "days_yellow": 4,
-    "days_red": 0,
-    "peak_strain": 16.9,
-    "peak_strain_day": "2025-12-21",
-    "peak_recovery": 92,
-    "peak_recovery_day": "2025-12-20"
+    "daily": [],
+    "averages": {},
+    "interpretation": "WHOOP data not included in MacroFactor export - add manually or via WHOOP API"
   },
-  "macrofactor": {
-    "avg_calories": 3241,
-    "avg_protein_g": 225,
-    "avg_carbs_g": 394,
-    "avg_fat_g": 82,
-    "weight_trend": "stable",
-    "days_tracked": 7,
-    "note": "Dec 15 was a higher calorie day (5239 cal)"
-  },
-  "wellbeing": {
-    "physical": 4,
-    "mental": 3,
-    "sleep_quality": 3,
-    "recovery": 4,
-    "injuries": "Ongoing - managing around hamstring and chest",
-    "injury_detail": "Keeping bench and deadlifts lighter as precaution, not limiting training"
-  },
-  "training": {
-    "sessions": 4,
-    "quality": 5,
-    "focus": "Strength/Hypertrophy",
-    "deload": "No deload",
-    "notes": "PRs hit, exceptional session quality despite moderate recovery metrics"
-  },
-  "forward_action": {
-    "changes": ["Prioritize sleep", "Manage stress better", "Accept holiday food flexibility"],
-    "priority": "Training consistency",
-    "accountability_style": "Weekly check-in",
-    "coach_note": null
-  },
-  "coach_summary": {
-    "executive_summary": "Outstanding training week with 4 exceptional sessions and PRs despite moderate recovery (59% avg). Higher strain week (13.4 avg) with two big training days (Dec 15 & 21 both 16+ strain). Training quality outperformed WHOOP recovery predictions. Food boredom is the main barrier to address post-holidays.",
-    "outlook_analysis": {
-      "score": 9,
-      "alignment": "aligned",
-      "interpretation": "High outlook (8-10) matches exceptional training quality. Good self-awareness - you know you're in a strong phase."
-    },
-    "metrics_status": {
-      "physical": "green",
-      "mental": "yellow",
-      "sleep": "yellow",
-      "recovery": "green",
-      "training_quality": "green",
-      "whoop_recovery": "yellow",
-      "whoop_hrv": "yellow"
-    },
-    "pattern_analysis": {
-      "recurring_wins": ["Training consistency", "Session quality", "Hitting PRs"],
-      "recurring_barriers": ["Food boredom/planning", "Holiday stress"],
-      "key_correlation": "Higher strain week (13.4) with 2 green recovery days shows good adaptation capacity"
-    },
-    "risk_flags": [],
-    "forward_action_validation": {
-      "user_priority": "Training consistency",
-      "alignment": "aligned",
-      "suggestion": "Consider adding 2-3 new meal options to combat food boredom post-holidays"
-    },
-    "recommendations": [
-      "Continue current training approach - PRs indicate productive phase",
-      "Sleep performance (74%) is the weak link - aim for 7.5h+ consistently",
-      "Post-Christmas: spend 30min planning 3 new meal options for variety",
-      "The Dec 17 short sleep (4h41m) hurt - avoid back-to-back short nights",
-      "Hamstring/chest management is smart - continue lighter loads until confidence returns"
-    ],
-    "questions_for_coach": [
-      "Higher strain week (13.4) sustainable given recovery pattern?",
-      "Food boredom strategy - any meal prep suggestions for variety?"
-    ],
-    "accountability_reminder": "Next check-in: Monday Dec 29 or early Jan"
-  }
+  "wellbeing": {},
+  "wins": [],
+  "coach_questions": ""
 }
