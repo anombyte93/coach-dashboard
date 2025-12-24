@@ -18,55 +18,13 @@
   },
   "nutrition": {
     "daily": [
-      {
-        "day": "Mon",
-        "calories": 3200,
-        "protein": 165,
-        "carbs": 340,
-        "fat": 180
-      },
-      {
-        "day": "Tue",
-        "calories": 3500,
-        "protein": 175,
-        "carbs": 370,
-        "fat": 195
-      },
-      {
-        "day": "Wed",
-        "calories": 3400,
-        "protein": 170,
-        "carbs": 355,
-        "fat": 188
-      },
-      {
-        "day": "Thu",
-        "calories": 3600,
-        "protein": 180,
-        "carbs": 380,
-        "fat": 200
-      },
-      {
-        "day": "Fri",
-        "calories": 3300,
-        "protein": 168,
-        "carbs": 345,
-        "fat": 182
-      },
-      {
-        "day": "Sat",
-        "calories": 3550,
-        "protein": 175,
-        "carbs": 375,
-        "fat": 195
-      },
-      {
-        "day": "Sun",
-        "calories": 3580,
-        "protein": 171,
-        "carbs": 355,
-        "fat": 190
-      }
+      { "day": "Mon", "calories": 3200, "protein": 165, "carbs": 340, "fat": 180 },
+      { "day": "Tue", "calories": 3500, "protein": 175, "carbs": 370, "fat": 195 },
+      { "day": "Wed", "calories": 3400, "protein": 170, "carbs": 355, "fat": 188 },
+      { "day": "Thu", "calories": 3600, "protein": 180, "carbs": 380, "fat": 200 },
+      { "day": "Fri", "calories": 3300, "protein": 168, "carbs": 345, "fat": 182 },
+      { "day": "Sat", "calories": 3550, "protein": 175, "carbs": 375, "fat": 195 },
+      { "day": "Sun", "calories": 3580, "protein": 171, "carbs": 355, "fat": 190 }
     ],
     "averages": {
       "calories": 3447,
@@ -84,62 +42,13 @@
   },
   "whoop": {
     "daily": [
-      {
-        "day": "Mon",
-        "hrv": 45,
-        "rhr": 74,
-        "sleep": 5.5,
-        "strain": 12.0,
-        "recovery": 52
-      },
-      {
-        "day": "Tue",
-        "hrv": 48,
-        "rhr": 72,
-        "sleep": 6.2,
-        "strain": 14.5,
-        "recovery": 58
-      },
-      {
-        "day": "Wed",
-        "hrv": 42,
-        "rhr": 75,
-        "sleep": 5.0,
-        "strain": 10.2,
-        "recovery": 48
-      },
-      {
-        "day": "Thu",
-        "hrv": 50,
-        "rhr": 71,
-        "sleep": 6.8,
-        "strain": 13.8,
-        "recovery": 62
-      },
-      {
-        "day": "Fri",
-        "hrv": 47,
-        "rhr": 73,
-        "sleep": 5.8,
-        "strain": 11.5,
-        "recovery": 55
-      },
-      {
-        "day": "Sat",
-        "hrv": 49,
-        "rhr": 72,
-        "sleep": 5.3,
-        "strain": 9.8,
-        "recovery": 60
-      },
-      {
-        "day": "Sun",
-        "hrv": 48,
-        "rhr": 73,
-        "sleep": 5.5,
-        "strain": 9.4,
-        "recovery": 64
-      }
+      { "day": "Mon", "hrv": 45, "rhr": 74, "sleep": 5.5, "strain": 12.0, "recovery": 52 },
+      { "day": "Tue", "hrv": 48, "rhr": 72, "sleep": 6.2, "strain": 14.5, "recovery": 58 },
+      { "day": "Wed", "hrv": 42, "rhr": 75, "sleep": 5.0, "strain": 10.2, "recovery": 48 },
+      { "day": "Thu", "hrv": 50, "rhr": 71, "sleep": 6.8, "strain": 13.8, "recovery": 62 },
+      { "day": "Fri", "hrv": 47, "rhr": 73, "sleep": 5.8, "strain": 11.5, "recovery": 55 },
+      { "day": "Sat", "hrv": 49, "rhr": 72, "sleep": 5.3, "strain": 9.8, "recovery": 60 },
+      { "day": "Sun", "hrv": 48, "rhr": 73, "sleep": 5.5, "strain": 9.4, "recovery": 64 }
     ],
     "averages": {
       "hrv": 47,

@@ -1,214 +1,229 @@
 {
-  "weekOf": "2025-12-08",
-  "measurements": {
-    "weight": 109.4,
-    "waist": 95,
-    "chest": 118,
-    "middle": 97,
-    "butt": 108.5,
-    "leg": 66,
-    "steps": 67956
+  "week_label": "2025-12-08 Week",
+  "schema_version": "2.0",
+  "context": {
+    "start_date": "2025-12-08",
+    "end_date": "2025-12-14",
+    "generated_at": "2025-12-16T22:50:00+08:00"
   },
-  "training": {
-    "overall_performance": "Strong week - 4 sessions, quality 5/5, mixed focus. Multiple compound and isolation PRs achieved",
-    "completed": "4 lifting sessions",
-    "difficulty": "Managing around hamstring strain (went lighter on legs) and pec concern",
-    "recovery": "Variable - one 16% crash day but strong rebounds",
-    "enjoyment": "High - 10/10 session, 9/10 outlook score",
-    "prs": [
-      "Squat PR (details in coach app)",
-      "Bench PR (details in coach app)",
-      "Deadlift PR (details in coach app)",
-      "OHP: 60kg \u2192 70kg (+10kg on Smith Machine)",
-      "Skull Crushers: 15kg \u2192 25kg (+10kg)"
-    ]
+  "data_sources": {
+    "whoop": "auto-imported",
+    "macrofactor": "auto-imported",
+    "reflection": "user input",
+    "wellbeing": "user input",
+    "training": "user input"
   },
-  "nutrition": {
+  "opening": {
+    "outlook_score": 9,
+    "context_type": "success",
+    "context_answer": "Stretching, consistent training, nutrition, and motivation all making everything feel easy"
+  },
+  "reflection": {
+    "wins": [
+      "Hit all planned sessions",
+      "Sleep consistency improved",
+      "Nutrition compliance high",
+      "Stress managed well",
+      "Lots of stretching and increased flexibility"
+    ],
+    "win_details": "Multiple systems firing together - stretching routine, training consistency, nutrition tracking, stress management all aligned",
+    "barriers": [
+      "Sleep issues"
+    ],
+    "main_barrier": "Sleep issues (despite perceived improvement, WHOOP shows 5.8h avg)"
+  },
+  "whoop": {
+    "recovery_pct": 66.3,
+    "hrv_ms": 50.5,
+    "rhr_bpm": 62.5,
+    "avg_strain": 14.3,
+    "avg_sleep_hours": 5.8,
     "daily": [
       {
-        "day": "Sun",
         "date": "2025-12-08",
+        "recovery": 79,
+        "hrv": 45,
+        "rhr": 61,
+        "strain": 13.9,
+        "sleep_hours": 6.25
+      },
+      {
+        "date": "2025-12-09",
+        "recovery": 45,
+        "hrv": 57,
+        "rhr": 64,
+        "strain": 14.0,
+        "sleep_hours": 4.05
+      },
+      {
+        "date": "2025-12-10",
+        "recovery": 78,
+        "hrv": 51,
+        "rhr": 68,
+        "strain": 14.1,
+        "sleep_hours": 6.48
+      },
+      {
+        "date": "2025-12-12",
+        "recovery": 16,
+        "hrv": 36,
+        "rhr": 64,
+        "strain": 15.7,
+        "sleep_hours": 3.17
+      },
+      {
+        "date": "2025-12-13",
+        "recovery": 94,
+        "hrv": 57,
+        "rhr": 59,
+        "strain": 13.7,
+        "sleep_hours": 8.52
+      },
+      {
+        "date": "2025-12-14",
+        "recovery": 86,
+        "hrv": 57,
+        "rhr": 59,
+        "strain": 14.3,
+        "sleep_hours": 6.38
+      }
+    ]
+  },
+  "macrofactor": {
+    "avg_calories": 3452,
+    "avg_protein_g": 236,
+    "avg_carbs_g": 364,
+    "avg_fat_g": 116,
+    "weight_trend": null,
+    "daily": {
+      "2025-12-08": {
         "calories": 4201,
         "protein": 251,
         "carbs": 546,
-        "fat": 114,
-        "steps": 9708
+        "fat": 114
       },
-      {
-        "day": "Mon",
-        "date": "2025-12-09",
+      "2025-12-09": {
         "calories": 4426,
         "protein": 249,
         "carbs": 536,
-        "fat": 154,
-        "steps": 9708
+        "fat": 154
       },
-      {
-        "day": "Tue",
-        "date": "2025-12-10",
+      "2025-12-10": {
         "calories": 4438,
         "protein": 216,
         "carbs": 536,
-        "fat": 173,
-        "steps": 9708
+        "fat": 173
       },
-      {
-        "day": "Wed",
-        "date": "2025-12-11",
+      "2025-12-11": {
         "calories": 2117,
         "protein": 214,
         "carbs": 222,
-        "fat": 47,
-        "steps": 9708
+        "fat": 47
       },
-      {
-        "day": "Thu",
-        "date": "2025-12-12",
+      "2025-12-12": {
         "calories": 2822,
         "protein": 219,
         "carbs": 262,
-        "fat": 93,
-        "steps": 9708
+        "fat": 93
       },
-      {
-        "day": "Fri",
-        "date": "2025-12-13",
+      "2025-12-13": {
         "calories": 2759,
         "protein": 249,
         "carbs": 240,
-        "fat": 75,
-        "steps": 9708
+        "fat": 75
       },
-      {
-        "day": "Sat",
-        "date": "2025-12-14",
+      "2025-12-14": {
         "calories": 3404,
         "protein": 252,
         "carbs": 206,
-        "fat": 158,
-        "steps": 9708
+        "fat": 158
       }
-    ],
-    "averages": {
-      "calories": 3452,
-      "protein": 236,
-      "carbs": 364,
-      "fat": 116
-    },
-    "targets": {
-      "calories": 2725,
-      "protein": 195,
-      "carbs": 295,
-      "fat": 85
-    },
-    "notes": "127% of calorie target (3452 avg). Protein at 121% (236g avg). Note: Dec 11 lower calories (2117) correlates with WHOOP crash day."
-  },
-  "whoop": {
-    "daily": [
-      {
-        "day": "Sun",
-        "date": "2025-12-08",
-        "hrv": 45,
-        "rhr": 61,
-        "sleep": 6.25,
-        "strain": 13.9,
-        "recovery": 79
-      },
-      {
-        "day": "Mon",
-        "date": "2025-12-09",
-        "hrv": 57,
-        "rhr": 64,
-        "sleep": 4.05,
-        "strain": 14.0,
-        "recovery": 45
-      },
-      {
-        "day": "Tue",
-        "date": "2025-12-10",
-        "hrv": 51,
-        "rhr": 68,
-        "sleep": 6.48,
-        "strain": 14.1,
-        "recovery": 78
-      },
-      {
-        "day": "Thu",
-        "date": "2025-12-12",
-        "hrv": 36,
-        "rhr": 64,
-        "sleep": 3.17,
-        "strain": 15.7,
-        "recovery": 16
-      },
-      {
-        "day": "Fri",
-        "date": "2025-12-13",
-        "hrv": 57,
-        "rhr": 59,
-        "sleep": 8.52,
-        "strain": 13.7,
-        "recovery": 94
-      },
-      {
-        "day": "Sat",
-        "date": "2025-12-14",
-        "hrv": 57,
-        "rhr": 59,
-        "sleep": 6.38,
-        "strain": 14.3,
-        "recovery": 86
-      }
-    ],
-    "averages": {
-      "hrv": 50.5,
-      "rhr": 62.5,
-      "sleep": 5.8,
-      "strain": 14.3,
-      "recovery": 66.3
-    },
-    "sleep_metrics": {
-      "avg_duration": 5.8,
-      "avg_efficiency": null,
-      "avg_need": 7.5,
-      "avg_debt": null,
-      "consistency": "Variable - one 3.17h night, one 8.52h night"
-    },
-    "interpretation": "66% avg recovery with variable sleep (5.8h avg vs 7.5h target). One severe crash day (16% recovery on Dec 12 with only 3.17h sleep) followed by strong rebound (94% on Dec 13). HRV solid at 50.5ms avg."
+    }
   },
   "wellbeing": {
-    "pain": "Hamstring strain (ongoing, managing around it)",
-    "appetite": "Higher than normal",
-    "cravings": "Higher than normal - finding it difficult to stick to recommended calories",
-    "stress": "Managed well",
-    "mood": "Excellent - 9/10 outlook",
-    "recovery_outside_gym": "Stretching routine paying dividends",
-    "lifestyle_factors": "Keeping fat low, salads for lunch/dinner, high-protein banana bread for breakfast, rice cakes throughout day. Hydration excellent at 4-5L water/day"
+    "physical": 5,
+    "mental": 4,
+    "sleep_quality": 3,
+    "recovery": 3,
+    "injuries": "Ongoing (managing around it)",
+    "injury_detail": "Hamstring strain; potential pec weakness on right from aggressive bench progression (not a strain yet)"
   },
-  "wins": [
-    "Hit all planned sessions",
-    "Multiple PRs: OHP 60\u219270kg (+10kg on Smith Machine), Skull Crushers 15\u219225kg (+10kg), Squat PR, Bench PR, Deadlift PR",
-    "Nutrition: Eating healthy foods, keeping fat low, salads for lunch/dinner, high-protein banana bread for breakfast",
-    "Hydration on point: 4-5 litres water per day",
-    "Stress managed well",
-    "Lots of stretching and increased flexibility",
-    "10/10 mood and session quality"
-  ],
-  "coach_questions": "1. How should I work around the hamstring strain during training?\n2. What weights should I be doing for my big compound lifts (squat, bench, deadlift) to avoid injuries? I can gauge isolation movements fine but with compounds I keep pushing more because I know I can, then run into issues. Need guidance on appropriate working weights so I don't get ahead of myself.",
-  "_coach_summary": {
+  "training": {
+    "sessions": 4,
+    "quality": 5,
+    "focus": "Mixed",
+    "deload": "No deload"
+  },
+  "forward_action": {
+    "changes": [
+      "Maintain training consistency"
+    ],
+    "priority": "Training consistency",
+    "accountability_style": "Daily check-in reminder",
+    "coach_note": null
+  },
+  "coach_summary": {
     "executive_summary": "Strong subjective week (9/10 outlook, exceptional training quality) but WHOOP reveals underlying stress: 66% avg recovery with one 16% crash day. Two injury concerns (hamstring strain, pec weakness) combined with 5.8h sleep avg and 14.3 strain suggests riding momentum at the edge of overreaching. The stretching habit is paying dividends - keep it.",
+    "outlook_analysis": {
+      "score": 9,
+      "alignment": "optimistic",
+      "interpretation": "Subjective ratings (9/10, physical 5/5, training 5/5) exceed objective WHOOP data (66% recovery, 5.8h sleep). This can indicate good mental state masking accumulating physical stress, or genuine adaptation capacity. Watch for delayed fatigue."
+    },
+    "metrics_status": {
+      "physical": "green",
+      "mental": "green",
+      "sleep": "yellow",
+      "recovery": "yellow",
+      "training_quality": "green",
+      "whoop_recovery": "yellow",
+      "whoop_hrv": "yellow"
+    },
+    "pattern_analysis": {
+      "recurring_wins": [
+        "Training consistency",
+        "Stretching routine",
+        "Nutrition compliance"
+      ],
+      "recurring_barriers": [
+        "Sleep duration"
+      ],
+      "key_correlation": "Dec 12 crash (16% recovery, 3.17h sleep, 15.7 strain) followed by strong rebound (94%, 8.52h sleep) - shows recovery capacity but also volatility risk"
+    },
     "risk_flags": [
       "Two active injury concerns (hamstring + pec)",
       "Sleep averaging 5.8h vs 7.5h target",
       "One severe recovery crash (16%) this week",
-      "Aggressive bench progression causing pec concern"
+      "Aggressive bench progression causing pec concern",
+      "High strain (14.3) maintained despite suboptimal recovery"
     ],
+    "forward_action_validation": {
+      "user_priority": "Training consistency",
+      "alignment": "partially_aligned",
+      "suggestion": "Training consistency is good for momentum, but consider: 1) Don't increase bench load until pec stabilizes, 2) Prioritize 7h+ sleep nights to prevent another crash day, 3) Hamstring rehab exercises pre-workout"
+    },
     "recommendations": [
-      "PROTECT SLEEP: Target 7h minimum",
-      "BENCH PROGRESSION: Hold weight, focus on control",
-      "NUTRITION: 236g protein avg is excellent. Maintain 3500+ on training days",
-      "HAMSTRING PROTOCOL: 5min dynamic stretching pre-workout",
-      "KEEP STRETCHING: This is clearly working"
-    ]
+      "PROTECT SLEEP: Target 7h minimum - one more 3h night could tank the week",
+      "BENCH PROGRESSION: Hold weight, focus on control and pec engagement - no increases until right side feels solid",
+      "NUTRITION: 236g protein avg is excellent. Lower calorie days (Dec 11-13) correlate with recovery dip - maintain 3500+ on training days",
+      "HAMSTRING PROTOCOL: 5min dynamic stretching pre-workout, focused hamstring mobility daily",
+      "KEEP STRETCHING: This is clearly working - don't cut it even when busy",
+      "MONITOR RECOVERY: If WHOOP shows <50% two days in a row, consider a lighter session"
+    ],
+    "questions_for_coach": [
+      "What triggered the Dec 12 sleep crash (3.17h)? Late night, stress, or just schedule?",
+      "How long has hamstring strain been present? Getting better or static?",
+      "Current bench working weight and where did pec concern start?"
+    ],
+    "accountability_reminder": "Daily check-in reminder set - will ping each day"
+  },
+  "weekOf": "2025-12-08",
+  "nutrition": {
+    "avg_calories": 3452,
+    "avg_protein_g": 236,
+    "avg_carbs_g": 364,
+    "avg_fat_g": 116,
+    "weight_trend": null,
+    "compliance": "high",
+    "notes": "Full week of tracking. 236g protein avg - solid. Dec 11 lower calories (2117) aligns with WHOOP crash day."
   }
 }
