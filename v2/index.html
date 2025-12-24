@@ -1634,6 +1634,20 @@
       });
     }
 
+    function buildDailyPlaceholders(weekDate) {
+      if (!weekDate) return [];
+      const start = new Date(weekDate);
+      const placeholders = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const iso = d.toISOString().slice(0, 10);
+        placeholders.push({ day: dayName, date: iso });
+      }
+      return placeholders;
+    }
+
     function normalizeWeekData(raw) {
       // If already in legacy schema, return as-is
       if (raw && raw.weekOf && raw.measurements && raw.nutrition && raw.whoop) {
@@ -1643,6 +1657,7 @@
       // Handle schema v2 (weekly summary format)
       if (raw && (raw.schema_version || raw.week_label || raw.context)) {
         const startDate = raw.context?.start_date || raw.week_label?.split(' ')[0] || null;
+        const placeholders = buildDailyPlaceholders(startDate);
         const whoop = raw.whoop || {};
         const macro = raw.macrofactor || {};
         const wellbeing = raw.wellbeing || {};
@@ -1669,7 +1684,7 @@
             enjoyment: training.quality ? `Quality ${training.quality}/5` : ''
           },
           nutrition: {
-            daily: [],
+            daily: placeholders.map(p => ({ ...p, calories: 0, protein: 0, carbs: 0, fat: 0, steps: 0 })),
             averages: {
               calories: macro.avg_calories || 0,
               protein: macro.avg_protein_g || 0,
@@ -1682,10 +1697,10 @@
               carbs: 314,
               fat: 102
             },
-            notes: macro.note || ''
+            notes: macro.note || reflection.win_details || ''
           },
           whoop: {
-            daily: [],
+            daily: placeholders.map(p => ({ ...p, hrv: 0, rhr: 0, sleep: 0, strain: 0, recovery: 0 })),
             averages: {
               hrv: whoop.hrv_ms || 0,
               rhr: whoop.rhr_bpm || 0,
