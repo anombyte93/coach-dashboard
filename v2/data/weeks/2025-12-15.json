@@ -90,9 +90,101 @@
     "notes": "122% of calorie target (3241 avg). Protein at 115% (225g avg). Steps: 82,994 total."
   },
   "whoop": {
-    "daily": [],
-    "averages": {},
-    "interpretation": "WHOOP data not included in MacroFactor export - add manually or via WHOOP API"
+    "daily": [
+      {
+        "day": "Mon",
+        "date": "2025-12-15",
+        "hrv": null,
+        "rhr": null,
+        "strain": 16.6,
+        "strain_label": "High",
+        "recovery": null,
+        "recovery_color": null,
+        "sleep_hours": 5.4,
+        "sleep_performance": 62
+      },
+      {
+        "day": "Tue",
+        "date": "2025-12-16",
+        "hrv": 38,
+        "rhr": 69,
+        "strain": 13.9,
+        "strain_label": "Moderate",
+        "recovery": 38,
+        "recovery_color": "yellow",
+        "sleep_hours": 8.7,
+        "sleep_performance": 76
+      },
+      {
+        "day": "Wed",
+        "date": "2025-12-17",
+        "hrv": 51,
+        "rhr": 60,
+        "strain": 10.7,
+        "strain_label": "Moderate",
+        "recovery": 50,
+        "recovery_color": "yellow",
+        "sleep_hours": 4.7,
+        "sleep_performance": 58
+      },
+      {
+        "day": "Thu",
+        "date": "2025-12-18",
+        "hrv": 49,
+        "rhr": 61,
+        "strain": 10.7,
+        "strain_label": "Moderate",
+        "recovery": 68,
+        "recovery_color": "green",
+        "sleep_hours": 9.2,
+        "sleep_performance": 81
+      },
+      {
+        "day": "Fri",
+        "date": "2025-12-19",
+        "hrv": 43,
+        "rhr": 64,
+        "strain": 13.7,
+        "strain_label": "Moderate",
+        "recovery": 47,
+        "recovery_color": "yellow",
+        "sleep_hours": 6.9,
+        "sleep_performance": 77
+      },
+      {
+        "day": "Sat",
+        "date": "2025-12-20",
+        "hrv": 59,
+        "rhr": 55,
+        "strain": 11.6,
+        "strain_label": "Moderate",
+        "recovery": 92,
+        "recovery_color": "green",
+        "sleep_hours": 7.6,
+        "sleep_performance": 82
+      },
+      {
+        "day": "Sun",
+        "date": "2025-12-21",
+        "hrv": 46,
+        "rhr": 60,
+        "strain": 16.9,
+        "strain_label": "High",
+        "recovery": 60,
+        "recovery_color": "yellow",
+        "sleep_hours": 7.5,
+        "sleep_performance": 80
+      }
+    ],
+    "averages": {
+      "hrv": 48,
+      "rhr": 62,
+      "strain": 13.4,
+      "recovery": 59,
+      "sleep_hours": 7.1,
+      "sleep_performance": 74
+    },
+    "interpretation": "Week avg recovery: 59% (yellow). Avg HRV: 48ms. Avg strain: 13.4 (moderate-high). Best day: Sat (92% green). Sleep avg: 7.1h at 74% performance."
   },
   "wellbeing": {},
   "wins": [],
